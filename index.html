@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>POIDH Contact Sheet — every bounty, one roll</title>
+<meta name="description" content="A contact sheet of every POIDH bounty across Base, Degen and Arbitrum. Bounties with proof develop into pictures. Bounties without proof stay unexposed.">
+
+<!-- ============================================================
+     DEPLOY: replace __APP_URL__ with your final https URL
+     (e.g. https://poidh-atlas.pages.dev or an IPFS gateway URL).
+     Search the file for __APP_URL__ — it appears in the meta tags
+     below and nowhere else. The app itself works without it; only
+     the Farcaster/OG embed preview needs it.
+     ============================================================ -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="POIDH Contact Sheet">
+<meta property="og:description" content="Every POIDH bounty on one roll of film. Proof develops. No proof stays unexposed.">
+<meta property="og:image" content="__APP_URL__/og.png">
+<meta property="og:url" content="__APP_URL__">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="__APP_URL__/og.png">
+
+<!-- Farcaster Mini App embed. `fc:miniapp` is the current key; `fc:frame`
+     is kept as a fallback for clients still reading the older key. -->
+<meta name="fc:miniapp" content='{"version":"1","imageUrl":"__APP_URL__/og.png","button":{"title":"Open the contact sheet","action":{"type":"launch_miniapp","name":"POIDH Contact Sheet","url":"__APP_URL__"}}}'>
+<meta name="fc:frame" content='{"version":"1","imageUrl":"__APP_URL__/og.png","button":{"title":"Open the contact sheet","action":{"type":"launch_frame","name":"POIDH Contact Sheet","url":"__APP_URL__"}}}'>
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230E0D0B'/%3E%3Crect x='6' y='9' width='20' height='14' fill='none' stroke='%23E9A83C' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2346B7C2'/%3E%3C/svg%3E">
+
+<style>
+/* ==========================================================================
+   POIDH CONTACT SHEET — design tokens
+   Palette is darkroom material, not decoration:
+     ink/sheet/rebate  = the room, the paper, the film edge
+     silver            = silver-gelatin print white
+     latent            = an unexposed frame (no proof yet)
+     amber             = developer / safelight (claims waiting on a human)
+     cyan              = cyanotype, fixed and washed (paid out)
+     bleach            = ferricyanide stain (cancelled)
+   Colour encodes bounty state. Nothing here is a mood accent.
+   No webfonts by design: this file must be self-contained for IPFS.
+   ========================================================================== */
+:root{
+  color-scheme: dark;
+
+  --ink:#0E0D0B;
+  --sheet:#16130F;
+  --sheet-2:#1D1913;
+  --rebate:#2B2620;
+  --rebate-hi:#3D362C;
+
+  --silver:#EDE7D9;
+  --grey:#928C7E;
+  --grey-dim:#6A6559;
+
+  --latent:#6E6A5C;
+  --amber:#E9A83C;
+  --amber-dim:#7A5A1E;
+  --cyan:#46B7C2;
+  --cyan-dim:#1E5A61;
+  --bleach:#8A5A4E;
+
+  --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* film rebate printing: caps, wide tracking, small */
+  --edge-tracking:.18em;
+
+  --rail-w:232px;
+  --bar-h:56px;
+
+  --r:2px; /* film has corners, not pills */
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--ink);
+  color:var(--silver);
+  font-family:var(--body);
+  font-size:15px;
+  line-height:1.5;
+  overflow-wrap:break-word;
+}
+
+/* ---- film edge printing: the display voice ---- */
+.edge{
+  font-family:var(--mono);
+  text-transform:uppercase;
+  letter-spacing:var(--edge-tracking);
+  font-size:11px;
+  font-weight:600;
+  color:var(--grey);
+}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+
+/* ==========================================================================
+   LIGHT TABLE — top bar
+   ========================================================================== */
+.bar{
+  position:sticky;top:0;z-index:60;
+  height:var(--bar-h);
+  display:flex;align-items:center;gap:18px;
+  padding:0 16px;
+  background:color-mix(in srgb, var(--ink) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rebate);
+}
+.mark{display:flex;align-items:baseline;gap:9px;flex:0 0 auto}
+.mark b{
+  font-family:var(--mono);font-weight:700;font-size:14px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--silver);
+}
+.mark i{
+  font-style:normal;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  border:1px solid var(--amber-dim);padding:2px 5px;
+}
+.bar-stats{display:flex;gap:20px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;line-height:1.15}
+.stat u{
+  text-decoration:none;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--grey-dim);
+}
+.stat b{font-family:var(--mono);font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.bar-act{display:flex;gap:8px;align-items:center}
+
+.btn{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--rebate-hi);padding:7px 11px;color:var(--grey);
+  background:var(--sheet);border-radius:var(--r);
+  transition:border-color .15s, color .15s, background .15s;
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--grey);color:var(--silver)}
+.btn.on{border-color:var(--amber);color:var(--amber);background:#20180B}
+.btn.solid{background:var(--amber);color:#140F04;border-color:var(--amber);font-weight:700}
+.btn.solid:hover{background:#F2B653}
+
+/* ==========================================================================
+   SHELL
+   ========================================================================== */
+.shell{display:flex;align-items:flex-start;min-height:calc(100dvh - var(--bar-h))}
+
+/* ---- filter rail ---- */
+.rail{
+  position:sticky;top:var(--bar-h);
+  flex:0 0 var(--rail-w);width:var(--rail-w);
+  height:calc(100dvh - var(--bar-h));
+  overflow-y:auto;
+  border-right:1px solid var(--rebate);
+  padding:18px 14px 40px;
+  background:var(--ink);
+}
+.rail-sec{margin-bottom:22px}
+.rail-sec > .edge{display:block;margin-bottom:9px;color:var(--grey-dim)}
+.opts{display:flex;flex-direction:column;gap:1px}
+.opt{
+  display:flex;align-items:center;gap:9px;
+  padding:6px 8px;border-radius:var(--r);
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;
+  color:var(--grey);text-align:left;width:100%;
+  border-left:2px solid transparent;
+  transition:background .12s,color .12s;
+}
+.opt:hover{background:var(--sheet);color:var(--silver)}
+.opt[aria-pressed="true"]{background:var(--sheet-2);color:var(--silver);border-left-color:var(--amber)}
+.opt .dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%}
+.opt .ct{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--grey-dim);font-size:10.5px}
+
+.field{
+  width:100%;background:var(--sheet);border:1px solid var(--rebate);
+  border-radius:var(--r);padding:8px 10px;
+  font-family:var(--mono);font-size:12px;color:var(--silver);
+}
+.field::placeholder{color:var(--grey-dim)}
+.field:focus{border-color:var(--amber);outline:none}
+select.field{cursor:pointer}
+
+/* ==========================================================================
+   THE CONTACT SHEET
+   ========================================================================== */
+.main{flex:1 1 auto;min-width:0;padding:20px 20px 80px}
+
+.sheet-head{display:flex;align-items:flex-end;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+.sheet-head h1{
+  margin:0;font-family:var(--mono);font-weight:700;
+  font-size:clamp(20px,3.4vw,34px);letter-spacing:-.01em;
+  text-transform:uppercase;line-height:1;
+}
+.sheet-head p{margin:0;color:var(--grey);font-size:13px;max-width:60ch}
+
+/* progress: a strip of exposed frames filling up */
+.loadbar{height:3px;background:var(--rebate);position:relative;overflow:hidden;margin-bottom:18px;border-radius:var(--r)}
+.loadbar i{position:absolute;inset:0 auto 0 0;background:var(--amber);width:0;transition:width .25s ease-out}
+.loadbar[data-done="1"]{opacity:0;transition:opacity .5s .3s}
+
+.sheet{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(196px,1fr));
+  gap:12px;
+}
+
+/* ---- a single frame on the roll ---- */
+.frame{
+  position:relative;
+  display:grid;
+  grid-template-columns:19px 1fr;
+  background:var(--sheet);
+  border:1px solid var(--rebate);
+  border-radius:var(--r);
+  overflow:hidden;
+  text-align:left;
+  transition:border-color .16s, transform .16s;
+  min-width:0;
+}
+.frame:hover{border-color:var(--rebate-hi);transform:translateY(-2px)}
+.frame:focus-visible{border-color:var(--amber)}
+/* offscreen frames skip layout+paint, so a full roll of 1000+ stays smooth */
+.sheet > .frame{content-visibility:auto;contain-intrinsic-size:auto 262px}
+
+/* sprocket margin: carries the frame number = the real bounty id */
+.sprock{
+  background:var(--ink);
+  border-right:1px solid var(--rebate);
+  display:flex;flex-direction:column;align-items:center;
+  padding:7px 0;gap:6px;
+}
+.sprock .holes{
+  flex:1 1 auto;width:7px;
+  background-image:repeating-linear-gradient(to bottom,
+     var(--rebate) 0 5px, transparent 5px 11px);
+  border-radius:1px;opacity:.85;
+}
+.sprock .fno{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  color:var(--grey-dim);font-variant-numeric:tabular-nums;
+}
+.frame[data-state="paid"] .fno{color:var(--cyan)}
+.frame[data-state="review"] .fno{color:var(--amber)}
+
+.body{min-width:0;display:flex;flex-direction:column}
+
+/* the image area — 3:2, like 35mm */
+.win{
+  position:relative;aspect-ratio:3/2;background:var(--ink);
+  overflow:hidden;border-bottom:1px solid var(--rebate);
+}
+.win img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  opacity:0;transition:opacity .5s ease-out, filter .5s ease-out;
+  filter:contrast(1.06) saturate(.94);
+}
+.win img.developed{opacity:1}
+
+/* ---- SIGNATURE: the unexposed frame ----
+   A bounty with no proof is literally an undeveloped negative.
+   Grain + a latent ghost of the title + rebate text. This is the
+   whole thesis of POIDH rendered as an absence. */
+.unexposed{position:absolute;inset:0;display:grid;place-items:center;padding:12px;overflow:hidden}
+.unexposed::before{
+  content:"";position:absolute;inset:-50%;
+  background-image:
+    radial-gradient(circle at 20% 30%, #ffffff0f 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, #ffffff0d 0 1px, transparent 1px),
+    radial-gradient(circle at 45% 85%, #ffffff0a 0 1px, transparent 1px),
+    radial-gradient(circle at 85% 15%, #ffffff0c 0 1px, transparent 1px);
+  background-size:13px 13px, 17px 17px, 23px 23px, 11px 11px;
+  animation:grain 1.1s steps(3) infinite;
+}
+.unexposed::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(160deg,#ffffff06,transparent 45%);
+}
+@keyframes grain{
+  0%{transform:translate3d(0,0,0)}
+  33%{transform:translate3d(-6px,3px,0)}
+  66%{transform:translate3d(4px,-5px,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+.latent-title{
+  position:relative;z-index:1;
+  font-family:var(--mono);font-size:10.5px;line-height:1.45;
+  color:#EDE7D91F; /* a latent image: present but not yet developed */
+  text-transform:uppercase;letter-spacing:.06em;
+  text-align:center;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.unexposed .stamp{
+  position:absolute;bottom:6px;left:8px;z-index:1;
+  font-family:var(--mono);font-size:8px;letter-spacing:.14em;
+  color:var(--latent);text-transform:uppercase;
+}
+
+/* caption strip under the frame */
+.cap{padding:9px 10px 10px;display:flex;flex-direction:column;gap:7px;flex:1 1 auto;min-width:0}
+.cap h3{
+  margin:0;font-size:12.5px;font-weight:600;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  color:var(--silver);
+}
+.cap .meta{display:flex;align-items:center;gap:7px;margin-top:auto;flex-wrap:wrap}
+.reward{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  font-variant-numeric:tabular-nums;color:var(--silver);
+}
+.reward small{font-size:9px;font-weight:600;letter-spacing:.1em;color:var(--grey);margin-left:2px}
+.pill{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:2px 5px;border:1px solid currentColor;border-radius:var(--r);
+}
+.s-open{color:var(--latent)}
+.s-review{color:var(--amber)}
+.s-paid{color:var(--cyan)}
+.s-cancelled{color:var(--bleach)}
+.chainmark{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--grey-dim);margin-left:auto;
+}
+/* grease-pencil ring: photographers circle the keepers */
+.keeper{position:absolute;top:5px;right:5px;z-index:2;width:20px;height:20px;pointer-events:none}
+
+.skel{background:var(--sheet);border:1px solid var(--rebate);border-radius:var(--r);aspect-ratio:1/1.22;position:relative;overflow:hidden}
+.skel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff08,transparent);animation:sweep 1.4s linear infinite}
+@keyframes sweep{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* ==========================================================================
+   LOUPE — detail overlay
+   ========================================================================== */
+.loupe{
+  position:fixed;inset:0;z-index:100;display:none;
+  background:#07060480;backdrop-filter:blur(3px);
+  padding:24px;overflow-y:auto;
+}
+.loupe[open]{display:block}
+.loupe-in{
+  max-width:940px;margin:0 auto;background:var(--sheet);
+  border:1px solid var(--rebate-hi);border-radius:var(--r);
+  box-shadow:0 24px 80px #000000a0;
+}
+.loupe-bar{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border-bottom:1px solid var(--rebate);position:sticky;top:0;
+  background:var(--sheet);z-index:2;
+}
+.loupe-body{padding:18px 16px 26px}
+.loupe-grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:760px){.loupe-grid{grid-template-columns:1.15fr .85fr}}
+.loupe h2{margin:0 0 8px;font-size:19px;line-height:1.3;font-weight:600}
+.loupe .desc{color:#C9C3B4;font-size:14px;white-space:pre-wrap;margin:0 0 16px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:12px;align-items:baseline}
+.kv dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--grey-dim);white-space:nowrap}
+.kv dd{margin:0;font-family:var(--mono);font-size:11.5px;word-break:break-all}
+
+.proofs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+.proof{border:1px solid var(--rebate);border-radius:var(--r);overflow:hidden;background:var(--ink);position:relative}
+.proof img{width:100%;aspect-ratio:3/2;object-fit:cover;display:block}
+.proof .pf{padding:7px 8px;font-size:11px;color:var(--grey)}
+.proof.accepted{border-color:var(--cyan-dim)}
+.proof.accepted::after{
+  content:"ACCEPTED";position:absolute;top:6px;left:6px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.12em;
+  background:var(--cyan);color:#06201F;padding:2px 5px;border-radius:1px;font-weight:700;
+}
+.raw{
+  margin-top:16px;background:var(--ink);border:1px solid var(--rebate);
+  border-radius:var(--r);padding:10px;max-height:260px;overflow:auto;
+}
+.raw pre{margin:0;font-family:var(--mono);font-size:10.5px;color:var(--grey);white-space:pre-wrap}
+details > summary{cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-dim);padding:4px 0}
+details > summary:hover{color:var(--silver)}
+
+/* ==========================================================================
+   LEDGER — stats strip
+   ========================================================================== */
+.ledger{border-top:1px solid var(--rebate);margin-top:40px;padding-top:24px}
+.ledger-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px}
+.board{min-width:0}
+.board > .edge{display:block;margin-bottom:10px}
+.row{display:flex;align-items:baseline;gap:9px;padding:5px 0;border-bottom:1px dotted var(--rebate);font-size:12px;min-width:0}
+.row .rk{font-family:var(--mono);font-size:9.5px;color:var(--grey-dim);flex:0 0 18px}
+.row .nm{font-family:var(--mono);font-size:11px;color:var(--silver);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
+.row .vl{font-family:var(--mono);font-size:11px;color:var(--amber);font-variant-numeric:tabular-nums;flex:0 0 auto}
+
+/* ==========================================================================
+   NOTICES / EMPTY / DIAGNOSTICS
+   ========================================================================== */
+.note{
+  border:1px solid var(--rebate-hi);border-left:2px solid var(--amber);
+  background:var(--sheet);padding:12px 14px;border-radius:var(--r);
+  font-size:13px;color:#C9C3B4;margin-bottom:16px;
+}
+.note b{color:var(--silver)}
+.note code{font-family:var(--mono);font-size:11.5px;color:var(--amber);word-break:break-all}
+.empty{padding:56px 20px;text-align:center;grid-column:1/-1}
+.empty .edge{display:block;margin-bottom:10px;color:var(--latent)}
+.empty p{color:var(--grey);margin:0 auto;max-width:46ch;font-size:13px}
+
+.diag{
+  position:fixed;bottom:0;right:0;z-index:70;max-width:min(420px,100vw);
+  background:var(--sheet);border:1px solid var(--rebate-hi);border-bottom:0;border-right:0;
+  font-family:var(--mono);font-size:10.5px;
+}
+.diag summary{padding:6px 12px;color:var(--grey-dim);letter-spacing:.12em;text-transform:uppercase}
+.diag .dbody{padding:0 12px 12px;max-height:44dvh;overflow:auto}
+.diag .ln{display:flex;gap:8px;padding:2px 0;border-bottom:1px dotted var(--rebate);color:var(--grey)}
+.diag .ln b{color:var(--silver);flex:0 0 auto}
+.diag .ok{color:var(--cyan)}
+.diag .warn{color:var(--amber)}
+.diag .bad{color:var(--bleach)}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width:900px){
+  .bar-stats{display:none}
+}
+@media (max-width:760px){
+  .shell{flex-direction:column}
+  .rail{
+    position:static;width:100%;flex:0 0 auto;height:auto;
+    border-right:0;border-bottom:1px solid var(--rebate);
+    padding:14px;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;
+  }
+  .rail-sec{margin-bottom:0}
+  .main{padding:16px 12px 70px}
+  .sheet{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+  .loupe{padding:0}
+  .loupe-in{border:0;min-height:100dvh}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  .win img{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="mark">
+    <b>POIDH</b><i>contact sheet</i>
+  </div>
+  <div class="bar-stats" id="barStats"></div>
+  <div class="bar-act">
+    <button class="btn" id="btnShare" title="Copy a link to exactly this view">Copy view link</button>
+    <a class="btn solid" href="https://poidh.xyz" target="_blank" rel="noopener">Create a bounty</a>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="rail" id="rail" aria-label="Filters"></aside>
+
+  <main class="main">
+    <div class="sheet-head">
+      <h1>The roll</h1>
+      <p id="subhead">Reading bounties…</p>
+    </div>
+    <div class="loadbar" id="loadbar"><i></i></div>
+    <div id="notices"></div>
+    <div class="sheet" id="sheet"></div>
+    <section class="ledger" id="ledger" hidden></section>
+  </main>
+</div>
+
+<div class="loupe" id="loupe" role="dialog" aria-modal="true" aria-labelledby="loupeTitle"></div>
+
+<details class="diag" id="diag">
+  <summary>Data sources</summary>
+  <div class="dbody" id="diagBody"></div>
+</details>
+
+<script>
+/* ==========================================================================
+   CORE — pure logic, no DOM. Extracted verbatim by the Node test harness
+   between the @core markers below, so tests run against shipped code.
+   ========================================================================== */
+/* @core-begin */
+(function(){
+"use strict";
+
+/* --------------------------------------------------------------------------
+   CHAINS
+   `slug` is the path segment poidh.xyz uses. `native` is the reward unit.
+   `contract` is intentionally null: the POIDH contract addresses could not
+   be verified while building this file, and inventing an address would make
+   the app silently wrong. Fill them in (or pass ?contract.base=0x… ) to arm
+   the onchain fallback. The app is fully functional without them.
+   -------------------------------------------------------------------------- */
+var CHAINS = {
+  base:     { slug:"base",     label:"Base",     chainId:8453,  native:"ETH",
+              rpc:["https://mainnet.base.org","https://base.llamarpc.com"], contract:null },
+  degen:    { slug:"degen",    label:"Degen",    chainId:666666666, native:"DEGEN",
+              rpc:["https://rpc.degen.tips"], contract:null },
+  arbitrum: { slug:"arbitrum", label:"Arbitrum", chainId:42161, native:"ETH",
+              rpc:["https://arb1.arbitrum.io/rpc"], contract:null }
+};
+var CHAIN_ORDER = ["base","degen","arbitrum"];
+
+/* --------------------------------------------------------------------------
+   SCHEMA ADAPTER — the single point of schema truth.
+
+   The live /data response shape could not be observed while building this
+   file, so every field is resolved by trying a list of plausible key paths
+   and falling back to a typed deep search. If the real response uses a name
+   not listed here, add it to ONE array below and the whole app follows.
+   -------------------------------------------------------------------------- */
+
+function isObj(v){ return v !== null && typeof v === "object" && !Array.isArray(v); }
+
+/** Read a dotted path, tolerating missing links. */
+function at(obj, path){
+  var cur = obj, parts = path.split("."), i;
+  for(i=0;i<parts.length;i++){
+    if(cur === null || cur === undefined) return undefined;
+    cur = cur[parts[i]];
+  }
+  return cur;
+}
+
+/** First defined, non-empty value among candidate paths. */
+function pick(obj, paths){
+  for(var i=0;i<paths.length;i++){
+    var v = at(obj, paths[i]);
+    if(v === undefined || v === null) continue;
+    if(typeof v === "string" && v.trim() === "") continue;
+    return v;
+  }
+  return undefined;
+}
+
+/** Breadth-first search for the first value satisfying `test`. Bounded. */
+function deepFind(root, test, maxNodes){
+  var queue = [root], seen = 0, cap = maxNodes || 4000;
+  while(queue.length && seen < cap){
+    var node = queue.shift(); seen++;
+    if(node === null || node === undefined) continue;
+    if(test(node)) return node;
+    if(Array.isArray(node)){
+      for(var i=0;i<node.length;i++) queue.push(node[i]);
+    } else if(isObj(node)){
+      for(var k in node){ if(Object.prototype.hasOwnProperty.call(node,k)) queue.push(node[k]); }
+    }
+  }
+  return undefined;
+}
+
+var ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+var IMG_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?|#|$)/i;
+
+function isAddress(v){ return typeof v === "string" && ADDR_RE.test(v); }
+
+/** Does this string look like something we can put in an <img src>? */
+function looksLikeImage(v){
+  if(typeof v !== "string") return false;
+  var s = v.trim();
+  if(s === "") return false;
+  if(/^ipfs:\/\//i.test(s)) return true;
+  if(/^data:image\//i.test(s)) return true;
+  if(/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|baf[0-9a-z]{20,})$/.test(s)) return true; // bare CID
+  if(/^https?:\/\//i.test(s)) return IMG_EXT_RE.test(s) || /\/ipfs\//i.test(s) || /image|img|photo|media|thumb/i.test(s);
+  return false;
+}
+
+/* Proof images are usually IPFS. Order matters: the first entry is tried, and
+   retryImage() walks down the list on each <img> error, so one dead gateway
+   costs at most one failed request per image. cloudflare-ipfs.com is
+   deliberately absent — Cloudflare sunset its public IPFS gateway.
+   UNVERIFIED: gateway liveness could not be checked in the build environment
+   (no network). The failover chain is what makes that acceptable. */
+var IPFS_GATEWAYS = [
+  "https://ipfs.io/ipfs/",
+  "https://dweb.link/ipfs/",
+  "https://w3s.link/ipfs/",
+  "https://4everland.io/ipfs/"
+];
+
+/** Normalise any image reference into an http(s) URL, or null. */
+function imageUrl(v, gatewayIndex){
+  if(typeof v !== "string") return null;
+  var s = v.trim();
+  if(s === "") return null;
+  var gw = IPFS_GATEWAYS[gatewayIndex || 0] || IPFS_GATEWAYS[0];
+  /* data: is allowed only for raster images. SVG is deliberately excluded —
+     an SVG can carry executable script, and no legitimate proof image is an
+     inline SVG. */
+  if(/^data:image\/(png|jpe?g|gif|webp|avif|bmp|x-icon)[;,]/i.test(s)) return s;
+  if(/^ipfs:\/\//i.test(s)) return gw + s.replace(/^ipfs:\/\/(ipfs\/)?/i, "");
+  if(/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|baf[0-9a-z]{20,})$/.test(s)) return gw + s;
+  if(/^https?:\/\//i.test(s)) return s;
+  if(/^\/\//.test(s)) return "https:" + s;
+  return null;
+}
+
+/* ---- money -------------------------------------------------------------- */
+
+/** Coerce anything numeric-ish into a BigInt of wei, or null. */
+function toWei(v){
+  if(v === null || v === undefined) return null;
+  if(typeof v === "bigint") return v;
+  if(typeof v === "number"){
+    if(!isFinite(v)) return null;
+    // A plain number this large is already wei; a small one is a decimal amount.
+    if(Number.isInteger(v) && Math.abs(v) >= 1e15) return BigInt(v);
+    return decimalToWei(String(v), 18);
+  }
+  if(isObj(v)){
+    // ethers/BN style: {hex:"0x…"} | {_hex:…} | {type:"BigNumber",hex:…}
+    var h = pick(v, ["hex","_hex","value","amount"]);
+    if(h !== undefined && h !== v) return toWei(h);
+    return null;
+  }
+  if(typeof v !== "string") return null;
+  var s = v.trim();
+  if(s === "") return null;
+  if(/^0x[0-9a-fA-F]+$/.test(s)){ try{ return BigInt(s); }catch(e){ return null; } }
+  if(/^-?\d+$/.test(s)){
+    // Bare integer string: treat >=15 digits as wei, else as a decimal amount.
+    var digits = s.replace("-","").length;
+    try{ return digits >= 16 ? BigInt(s) : decimalToWei(s, 18); }catch(e){ return null; }
+  }
+  if(/^-?\d*\.\d+$/.test(s)) return decimalToWei(s, 18);
+  return null;
+}
+
+/** "1.25" -> 1250000000000000000n. Exact; no float maths. */
+function decimalToWei(str, decimals){
+  var neg = /^-/.test(str);
+  var s = str.replace(/^-/,"");
+  var parts = s.split(".");
+  var whole = parts[0] || "0";
+  var frac  = (parts[1] || "").slice(0, decimals);
+  while(frac.length < decimals) frac += "0";
+  var out = BigInt(whole) * (10n ** BigInt(decimals)) + BigInt(frac || "0");
+  return neg ? -out : out;
+}
+
+/** Human reward string. Keeps small amounts legible, big ones short. */
+function formatWei(wei, decimals){
+  if(wei === null || wei === undefined) return "—";
+  var d = decimals === undefined ? 18 : decimals;
+  var neg = wei < 0n;
+  var v = neg ? -wei : wei;
+  var base = 10n ** BigInt(d);
+  var whole = v / base;
+  var frac = v % base;
+
+  var s;
+  if(whole >= 1000000n){
+    s = (Number(whole) / 1e6).toFixed(Number(whole) >= 1e7 ? 0 : 1).replace(/\.0$/,"") + "M";
+  } else if(whole >= 1000n){
+    s = (Number(whole) / 1e3).toFixed(Number(whole) >= 1e4 ? 0 : 1).replace(/\.0$/,"") + "k";
+  } else if(whole > 0n){
+    var fs = frac.toString().padStart(d, "0").slice(0, 3).replace(/0+$/,"");
+    s = whole.toString() + (fs ? "." + fs : "");
+  } else {
+    // Sub-1: show up to 6 significant-ish places, trimmed.
+    var f = frac.toString().padStart(d, "0").slice(0, 6).replace(/0+$/,"");
+    s = f === "" ? "0" : "0." + f;
+  }
+  return (neg ? "-" : "") + s;
+}
+
+/** Ascending compare; nulls sort last. */
+function cmpWei(a, b){
+  if(a === null && b === null) return 0;
+  if(a === null) return 1;
+  if(b === null) return -1;
+  return a < b ? -1 : (a > b ? 1 : 0);
+}
+
+/**
+ * Descending compare; nulls STILL sort last.
+ * Flipping cmpWei's arguments would also flip its null handling and float
+ * unpriced bounties to the top of the sheet, so descending needs its own.
+ */
+function cmpWeiDesc(a, b){
+  if(a === null && b === null) return 0;
+  if(a === null) return 1;
+  if(b === null) return -1;
+  return a < b ? 1 : (a > b ? -1 : 0);
+}
+
+function shortAddr(a){
+  if(!isAddress(a)) return a || "—";
+  return a.slice(0,6) + "…" + a.slice(-4);
+}
+
+/* ---- timestamps --------------------------------------------------------- */
+
+/** Seconds, milliseconds, or ISO -> ms epoch, or null. */
+function toMs(v){
+  if(v === null || v === undefined) return null;
+  if(typeof v === "number"){
+    if(!isFinite(v) || v <= 0) return null;
+    return v < 1e11 ? Math.round(v * 1000) : Math.round(v);
+  }
+  if(typeof v === "string"){
+    var s = v.trim();
+    if(s === "") return null;
+    if(/^\d+$/.test(s)) return toMs(Number(s));
+    var t = Date.parse(s);
+    return isNaN(t) ? null : t;
+  }
+  return null;
+}
+
+function relTime(ms, nowMs){
+  if(ms === null) return "—";
+  var now = nowMs === undefined ? Date.now() : nowMs;
+  var d = Math.max(0, now - ms), m = 60000, h = 3600000, dy = 86400000;
+  if(d < m) return "just now";
+  if(d < h) return Math.floor(d/m) + "m ago";
+  if(d < dy) return Math.floor(d/h) + "h ago";
+  if(d < 30*dy) return Math.floor(d/dy) + "d ago";
+  if(d < 365*dy) return Math.floor(d/(30*dy)) + "mo ago";
+  return Math.floor(d/(365*dy)) + "y ago";
+}
+
+/* ---- claims ------------------------------------------------------------- */
+
+function normalizeClaim(raw, gatewayIndex){
+  if(!isObj(raw)) return null;
+  var accepted = pick(raw, ["accepted","isAccepted","is_accepted","paid","isPaid","approved","winner","isWinner"]);
+  var img = pick(raw, ["image","imageUrl","image_url","uri","tokenURI","token_uri","url","media","photo","proof","imageURI"]);
+  if(img === undefined){
+    var found = deepFind(raw, looksLikeImage, 400);
+    if(found !== undefined) img = found;
+  }
+  var claimant = pick(raw, ["issuer","claimant","creator","owner","address","by","from","submitter"]);
+  if(!isAddress(claimant)) {
+    var a = deepFind(raw, isAddress, 400);
+    if(a !== undefined) claimant = a;
+  }
+  return {
+    id: pick(raw, ["id","claimId","claim_id","tokenId","index"]),
+    title: pick(raw, ["title","name","heading"]) || "",
+    description: pick(raw, ["description","desc","body","text"]) || "",
+    claimant: isAddress(claimant) ? claimant : null,
+    image: imageUrl(img, gatewayIndex),
+    accepted: accepted === true || accepted === 1 || accepted === "true",
+    createdAt: toMs(pick(raw, ["createdAt","created_at","timestamp","time","blockTimestamp","date"]))
+  };
+}
+
+/** Find the claims array anywhere in the payload. */
+function extractClaims(raw){
+  var direct = pick(raw, ["claims","claimList","claim_list","submissions","proofs","entries","data.claims","bounty.claims","result.claims"]);
+  if(Array.isArray(direct)) return direct;
+  var found = deepFind(raw, function(n){
+    return Array.isArray(n) && n.length > 0 && isObj(n[0]) &&
+      (("accepted" in n[0]) || ("claimant" in n[0]) || ("image" in n[0]) || ("imageUrl" in n[0]) || ("tokenURI" in n[0]));
+  }, 3000);
+  return Array.isArray(found) ? found : [];
+}
+
+/* ---- status ------------------------------------------------------------- */
+
+/**
+ * Derive a display state. Order matters: a paid bounty is paid even if it
+ * also has open-looking flags, and we only claim "paid" on positive evidence.
+ * States: paid | cancelled | review | open | unknown
+ */
+function deriveStatus(raw, claims){
+  var s = pick(raw, ["status","state","bountyStatus"]);
+  if(typeof s === "string"){
+    var t = s.toLowerCase();
+    if(/paid|complete|closed|settled|award|accept/.test(t)) return "paid";
+    if(/cancel|refund|withdraw|expired/.test(t)) return "cancelled";
+    if(/review|pending|submitted/.test(t)) return "review";
+    if(/open|active|live/.test(t)) return claims.length ? "review" : "open";
+  }
+
+  var paidFlag = pick(raw, ["isPaid","paid","claimed","isClaimed","is_claimed","inProgress"]);
+  var cancelled = pick(raw, ["isCancelled","cancelled","canceled","isRefunded","refunded"]);
+  var winner = pick(raw, ["winner","acceptedClaim","accepted_claim","claimWinner","payoutTo"]);
+
+  if(cancelled === true || cancelled === 1) return "cancelled";
+  if(isAddress(winner)) return "paid";
+  if(paidFlag === true || paidFlag === 1) return "paid";
+
+  for(var i=0;i<claims.length;i++){ if(claims[i].accepted) return "paid"; }
+  if(claims.length > 0) return "review";
+
+  // No positive signal either way. Say "open" only if we saw the bounty at all.
+  return "open";
+}
+
+var STATUS_META = {
+  open:      { label:"Unexposed", tone:"s-open",      hint:"No proof submitted yet" },
+  review:    { label:"In developer", tone:"s-review", hint:"Proof submitted, awaiting a decision" },
+  paid:      { label:"Fixed",      tone:"s-paid",     hint:"Paid out" },
+  cancelled: { label:"Bleached",   tone:"s-cancelled",hint:"Cancelled or refunded" },
+  unknown:   { label:"Unread",     tone:"s-open",     hint:"State could not be determined" }
+};
+
+/* ---- the adapter itself ------------------------------------------------- */
+
+/**
+ * Turn a raw /data (or RPC) payload into the canonical Bounty the UI uses.
+ * Never throws on odd input: returns a Bounty with nulls instead.
+ */
+function normalizeBounty(rawIn, chainSlug, id, opts){
+  var o = opts || {};
+  var gw = o.gatewayIndex || 0;
+  var raw = rawIn;
+
+  // Unwrap common envelopes: {data:{…}} {bounty:{…}} {result:{…}} [{…}]
+  if(Array.isArray(raw)) raw = raw[0];
+  if(isObj(raw)){
+    var inner = pick(raw, ["bounty","data.bounty","data","result","payload"]);
+    if(isObj(inner) && (("title" in inner) || ("name" in inner) || ("description" in inner) || ("amount" in inner))) raw = inner;
+  }
+  if(!isObj(raw)) raw = {};
+
+  var chain = CHAINS[chainSlug] || { slug:chainSlug, label:chainSlug, native:"" };
+
+  var rawClaims = extractClaims(raw);
+  var claims = [];
+  for(var i=0;i<rawClaims.length;i++){
+    var c = normalizeClaim(rawClaims[i], gw);
+    if(c) claims.push(c);
+  }
+
+  var amountRaw = pick(raw, ["amount","reward","value","bountyAmount","amountWei","prize","total","funds","balance"]);
+  var wei = toWei(amountRaw);
+
+  var issuer = pick(raw, ["issuer","creator","owner","funder","author","from","createdBy"]);
+  if(!isAddress(issuer)){
+    var a = deepFind(raw, isAddress, 1200);
+    issuer = a !== undefined ? a : null;
+  }
+
+  var title = pick(raw, ["title","name","heading","subject"]);
+  var description = pick(raw, ["description","desc","body","details","text","content"]);
+
+  var status = deriveStatus(raw, claims);
+
+  // Best image to print in the frame: an accepted claim wins, else the newest.
+  var proof = null;
+  for(var j=0;j<claims.length;j++){ if(claims[j].accepted && claims[j].image){ proof = claims[j].image; break; } }
+  if(!proof){ for(var k=0;k<claims.length;k++){ if(claims[k].image){ proof = claims[k].image; break; } } }
+  if(!proof){
+    var bimg = pick(raw, ["image","imageUrl","image_url","banner","media","thumbnail"]);
+    if(bimg !== undefined) proof = imageUrl(bimg, gw);
+  }
+
+  var numId = (typeof id === "number") ? id : parseInt(pick(raw, ["id","bountyId","bounty_id","index"]) || id, 10);
+
+  return {
+    chain: chain.slug,
+    chainLabel: chain.label,
+    id: isNaN(numId) ? id : numId,
+    key: chain.slug + ":" + (isNaN(numId) ? id : numId),
+    title: (typeof title === "string" && title.trim()) ? title.trim() : "Untitled bounty",
+    description: (typeof description === "string") ? description.trim() : "",
+    issuer: isAddress(issuer) ? issuer : null,
+    amountWei: wei,
+    amountDisplay: formatWei(wei, 18),
+    currency: chain.native,
+    status: status,
+    claims: claims,
+    claimCount: claims.length,
+    proofImage: proof,
+    createdAt: toMs(pick(raw, ["createdAt","created_at","timestamp","time","blockTimestamp","date","createdAtBlock"])),
+    isMultiplayer: pick(raw, ["isMultiplayer","multiplayer","isOpen","allowMultiple"]) === true,
+    url: "https://poidh.xyz/" + chain.slug + "/bounty/" + (isNaN(numId) ? id : numId),
+    raw: rawIn
+  };
+}
+
+/* --------------------------------------------------------------------------
+   FILTER / SORT / AGGREGATE
+   -------------------------------------------------------------------------- */
+
+function matchesQuery(b, q){
+  if(!q) return true;
+  var t = q.toLowerCase();
+  return (b.title||"").toLowerCase().indexOf(t) !== -1 ||
+         (b.description||"").toLowerCase().indexOf(t) !== -1 ||
+         (b.issuer||"").toLowerCase().indexOf(t) !== -1 ||
+         String(b.id) === t;
+}
+
+function applyFilters(list, f){
+  var out = [], i, b;
+  for(i=0;i<list.length;i++){
+    b = list[i];
+    if(f.chains && f.chains.length && f.chains.indexOf(b.chain) === -1) continue;
+    if(f.statuses && f.statuses.length && f.statuses.indexOf(b.status) === -1) continue;
+    if(f.withProofOnly && !b.proofImage) continue;
+    if(f.minWei !== null && f.minWei !== undefined){
+      if(b.amountWei === null || b.amountWei < f.minWei) continue;
+    }
+    if(!matchesQuery(b, f.q)) continue;
+    out.push(b);
+  }
+  return out;
+}
+
+var SORTS = {
+  "reward-desc": function(a,b){ return cmpWeiDesc(a.amountWei, b.amountWei) || (b.id - a.id); },
+  "reward-asc":  function(a,b){ return cmpWei(a.amountWei, b.amountWei) || (a.id - b.id); },
+  "newest":      function(a,b){ return (b.createdAt||0) - (a.createdAt||0) || (b.id - a.id); },
+  "oldest":      function(a,b){ return (a.createdAt||0) - (b.createdAt||0) || (a.id - b.id); },
+  "claims-desc": function(a,b){ return b.claimCount - a.claimCount || (b.id - a.id); },
+  "id-desc":     function(a,b){ return b.id - a.id; },
+  "id-asc":      function(a,b){ return a.id - b.id; }
+};
+
+function sortBounties(list, key){
+  var fn = SORTS[key] || SORTS["reward-desc"];
+  return list.slice().sort(fn);
+}
+
+/** Totals + leaderboards. Sums are per-currency because ETH != DEGEN. */
+function aggregate(list){
+  var byStatus = { open:0, review:0, paid:0, cancelled:0, unknown:0 };
+  var byChain = {};
+  var totals = {};      // currency -> BigInt
+  var paidTotals = {};  // currency -> BigInt
+  var funders = {};     // addr -> {count, byCur:{}}
+  var earners = {};     // addr -> {count, byCur:{}}
+  var withProof = 0, claimsTotal = 0;
+
+  for(var i=0;i<list.length;i++){
+    var b = list[i];
+    byStatus[b.status] = (byStatus[b.status]||0) + 1;
+    byChain[b.chain] = (byChain[b.chain]||0) + 1;
+    if(b.proofImage) withProof++;
+    claimsTotal += b.claimCount;
+
+    if(b.amountWei !== null){
+      totals[b.currency] = (totals[b.currency] || 0n) + b.amountWei;
+      if(b.status === "paid") paidTotals[b.currency] = (paidTotals[b.currency] || 0n) + b.amountWei;
+    }
+    if(b.issuer){
+      var f = funders[b.issuer] || (funders[b.issuer] = { addr:b.issuer, count:0, byCur:{} });
+      f.count++;
+      if(b.amountWei !== null) f.byCur[b.currency] = (f.byCur[b.currency] || 0n) + b.amountWei;
+    }
+    if(b.status === "paid"){
+      for(var j=0;j<b.claims.length;j++){
+        var c = b.claims[j];
+        if(!c.accepted || !c.claimant) continue;
+        var e = earners[c.claimant] || (earners[c.claimant] = { addr:c.claimant, count:0, byCur:{} });
+        e.count++;
+        if(b.amountWei !== null) e.byCur[b.currency] = (e.byCur[b.currency] || 0n) + b.amountWei;
+      }
+    }
+  }
+
+  return {
+    count:list.length, byStatus:byStatus, byChain:byChain,
+    totals:totals, paidTotals:paidTotals,
+    withProof:withProof, claimsTotal:claimsTotal,
+    topFunders: rankBoard(funders),
+    topEarners: rankBoard(earners),
+    biggest: sortBounties(list, "reward-desc").slice(0, 8)
+  };
+}
+
+/** Rank by count, then by the largest single-currency sum. Deterministic. */
+function rankBoard(map){
+  var arr = [], k;
+  for(k in map){ if(Object.prototype.hasOwnProperty.call(map,k)) arr.push(map[k]); }
+  arr.sort(function(a,b){
+    if(b.count !== a.count) return b.count - a.count;
+    var am = maxCur(a.byCur), bm = maxCur(b.byCur);
+    var c = cmpWeiDesc(am, bm);
+    if(c) return c;
+    return a.addr < b.addr ? -1 : 1;
+  });
+  return arr.slice(0, 8);
+}
+function maxCur(byCur){
+  var best = null, k;
+  for(k in byCur){ if(!Object.prototype.hasOwnProperty.call(byCur,k)) continue;
+    if(best === null || byCur[k] > best) best = byCur[k]; }
+  return best;
+}
+
+/* --------------------------------------------------------------------------
+   CONCURRENCY POOL
+   Bounded parallel work with retry + backoff and cooperative abort.
+   -------------------------------------------------------------------------- */
+
+/**
+ * @param items    array of inputs
+ * @param worker   (item, index) => Promise<result>
+ * @param opts     { concurrency, onResult(res,item,i), onError(err,item,i),
+ *                   signal, retries, backoffMs, sleep }
+ */
+function pool(items, worker, opts){
+  var o = opts || {};
+  var limit = Math.max(1, o.concurrency || 8);
+  var retries = o.retries === undefined ? 2 : o.retries;
+  var backoff = o.backoffMs === undefined ? 300 : o.backoffMs;
+  var sleep = o.sleep || function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  var next = 0, active = 0, done = 0, results = new Array(items.length);
+  var settled = false;
+
+  return new Promise(function(resolve){
+    function finish(){
+      if(settled) return;
+      settled = true;
+      resolve(results);
+    }
+    function launch(){
+      if(settled) return;
+      if(o.signal && o.signal.aborted){ finish(); return; }
+      while(active < limit && next < items.length){
+        (function(i){
+          var item = items[i];
+          active++; next++;
+          attempt(item, i, 0).then(function(v){
+            results[i] = { ok:true, value:v, item:item };
+            if(o.onResult) { try{ o.onResult(v, item, i); }catch(e){} }
+          }, function(err){
+            results[i] = { ok:false, error:err, item:item };
+            if(o.onError) { try{ o.onError(err, item, i); }catch(e){} }
+          }).then(function(){
+            active--; done++;
+            if(done >= items.length) finish();
+            else launch();
+          });
+        })(next);
+      }
+      if(items.length === 0) finish();
+    }
+    function attempt(item, i, tryNo){
+      if(o.signal && o.signal.aborted) return Promise.reject(new Error("aborted"));
+      return Promise.resolve()
+        .then(function(){ return worker(item, i); })
+        .catch(function(err){
+          if(tryNo >= retries || (o.signal && o.signal.aborted)) throw err;
+          return sleep(backoff * Math.pow(2, tryNo)).then(function(){
+            return attempt(item, i, tryNo + 1);
+          });
+        });
+    }
+    launch();
+  });
+}
+
+/* --------------------------------------------------------------------------
+   ID DISCOVERY
+   The documented endpoint is per-bounty, so the highest live id has to be
+   found by probing: ramp up until a miss, then binary search the boundary.
+   Assumes ids are broadly contiguous from 1; `probeRun` guards against a
+   single hole ending the ramp early.
+   -------------------------------------------------------------------------- */
+
+/**
+ * @param exists  (id) => Promise<boolean>
+ * @param opts    { start, max, probeRun, signal }
+ * @returns highest id believed to exist (0 if none)
+ */
+function discoverMaxId(exists, opts){
+  var o = opts || {};
+  var start = o.start || 1;
+  var hardMax = o.max || 100000;
+  var run = o.probeRun === undefined ? 3 : o.probeRun;
+
+  function anyExists(ids){
+    var i = 0;
+    function step(){
+      if(i >= ids.length) return Promise.resolve(false);
+      var id = ids[i++];
+      return exists(id).then(function(ok){ return ok ? true : step(); });
+    }
+    return step();
+  }
+
+  // Phase 1: double until a window of `run` consecutive ids all miss.
+  function ramp(lo, hi){
+    if(o.signal && o.signal.aborted) return Promise.resolve([lo, hi]);
+    if(hi > hardMax) return Promise.resolve([lo, hardMax]);
+    var window = [];
+    for(var d=0; d<run; d++) window.push(hi + d);
+    return anyExists(window).then(function(found){
+      if(!found) return [lo, hi];
+      return ramp(hi, hi * 2);
+    });
+  }
+
+  // Phase 2: binary search the last existing id in (lo, hi].
+  function bisect(lo, hi){
+    if(o.signal && o.signal.aborted) return Promise.resolve(lo);
+    if(lo >= hi) return Promise.resolve(lo);
+    var mid = Math.floor((lo + hi + 1) / 2);
+    if(mid === lo) return Promise.resolve(lo);
+    return exists(mid).then(function(ok){
+      return ok ? bisect(mid, hi) : bisect(lo, mid - 1);
+    });
+  }
+
+  return exists(start).then(function(ok0){
+    if(!ok0) return 0;
+    return ramp(start, Math.max(2, start * 2)).then(function(r){
+      return bisect(r[0], Math.min(r[1], hardMax));
+    });
+  });
+}
+
+/* --------------------------------------------------------------------------
+   ABI CODEC (minimal) — for the onchain fallback.
+   Only what's needed to call view functions taking/returning
+   uint256 / address / bool / string. Hand-rolled to keep the file
+   dependency-free; verified against known vectors in the test harness.
+   -------------------------------------------------------------------------- */
+
+function keccakUnavailable(){
+  // Selectors are precomputed constants rather than hashed at runtime:
+  // shipping a keccak-256 implementation is a lot of unverified surface,
+  // and the function set here is fixed and known.
+  return null;
+}
+
+function padLeft64(hex){
+  var h = hex.replace(/^0x/,"");
+  while(h.length < 64) h = "0" + h;
+  return h;
+}
+function encodeUint(n){
+  var v = typeof n === "bigint" ? n : BigInt(n);
+  if(v < 0n) throw new Error("uint cannot be negative");
+  return padLeft64(v.toString(16));
+}
+function encodeAddress(a){
+  if(!isAddress(a)) throw new Error("bad address: " + a);
+  return padLeft64(a.slice(2).toLowerCase());
+}
+/** Build calldata: 4-byte selector + head-packed static args. */
+function encodeCall(selector, args){
+  var out = selector.replace(/^0x/,"");
+  for(var i=0;i<(args||[]).length;i++){
+    var a = args[i];
+    if(a && a.type === "address") out += encodeAddress(a.value);
+    else out += encodeUint(a && a.value !== undefined ? a.value : a);
+  }
+  return "0x" + out;
+}
+
+function words(hexIn){
+  var h = hexIn.replace(/^0x/,"");
+  var out = [];
+  for(var i=0;i<h.length;i+=64) out.push(h.slice(i, i+64));
+  return out;
+}
+function decodeUintWord(w){ return BigInt("0x" + (w || "0")); }
+function decodeAddressWord(w){ return "0x" + (w || "").slice(24); }
+function decodeBoolWord(w){ return decodeUintWord(w) !== 0n; }
+
+/** Decode a dynamic string given all words and its head offset (bytes). */
+function decodeStringAt(ws, offsetBytes){
+  var slot = Number(offsetBytes) / 32;
+  if(!isFinite(slot) || slot < 0 || slot >= ws.length) return "";
+  var len = Number(decodeUintWord(ws[slot]));
+  if(!isFinite(len) || len < 0) return "";
+  var hex = "";
+  var need = Math.ceil(len / 32);
+  for(var i=1;i<=need;i++) hex += ws[slot + i] || "";
+  hex = hex.slice(0, len * 2);
+  var s = "";
+  for(var j=0;j<hex.length;j+=2){
+    var code = parseInt(hex.slice(j, j+2), 16);
+    if(!isFinite(code)) break;
+    s += String.fromCharCode(code);
+  }
+  try{ return decodeURIComponent(escape(s)); }catch(e){ return s; }
+}
+
+/**
+ * Decode a tuple of simple types from eth_call output.
+ * `types` items: "uint256" | "address" | "bool" | "string"
+ */
+function decodeTuple(hex, types){
+  var ws = words(hex);
+  var out = [];
+  for(var i=0;i<types.length;i++){
+    var w = ws[i];
+    switch(types[i]){
+      case "address": out.push(decodeAddressWord(w)); break;
+      case "bool":    out.push(decodeBoolWord(w)); break;
+      case "string":  out.push(decodeStringAt(ws, decodeUintWord(w))); break;
+      default:        out.push(decodeUintWord(w));
+    }
+  }
+  return out;
+}
+
+/* --------------------------------------------------------------------------
+   URL STATE — every view is a shareable link (needed for the cast).
+   -------------------------------------------------------------------------- */
+
+function encodeState(f){
+  var p = new URLSearchParams();
+  if(f.chains && f.chains.length && f.chains.length !== CHAIN_ORDER.length) p.set("c", f.chains.join(","));
+  if(f.statuses && f.statuses.length) p.set("s", f.statuses.join(","));
+  if(f.q) p.set("q", f.q);
+  if(f.sort && f.sort !== "reward-desc") p.set("o", f.sort);
+  if(f.withProofOnly) p.set("p", "1");
+  if(f.minEth) p.set("m", f.minEth);
+  if(f.open) p.set("b", f.open);
+  return p.toString();
+}
+
+function decodeState(qs){
+  var p = new URLSearchParams(qs || "");
+  function list(v){ return v ? v.split(",").filter(Boolean) : []; }
+  var chains = list(p.get("c")).filter(function(c){ return !!CHAINS[c]; });
+  var min = p.get("m");
+  return {
+    chains: chains.length ? chains : CHAIN_ORDER.slice(),
+    statuses: list(p.get("s")).filter(function(s){ return !!STATUS_META[s]; }),
+    q: p.get("q") || "",
+    sort: SORTS[p.get("o")] ? p.get("o") : "reward-desc",
+    withProofOnly: p.get("p") === "1",
+    minEth: (min && /^\d*\.?\d+$/.test(min)) ? min : "",
+    minWei: (min && /^\d*\.?\d+$/.test(min)) ? decimalToWei(min, 18) : null,
+    open: p.get("b") || ""
+  };
+}
+
+/* ---- export ------------------------------------------------------------- */
+var CORE = {
+  CHAINS:CHAINS, CHAIN_ORDER:CHAIN_ORDER, STATUS_META:STATUS_META, SORTS:SORTS,
+  IPFS_GATEWAYS:IPFS_GATEWAYS,
+  isObj:isObj, at:at, pick:pick, deepFind:deepFind,
+  isAddress:isAddress, looksLikeImage:looksLikeImage, imageUrl:imageUrl,
+  toWei:toWei, decimalToWei:decimalToWei, formatWei:formatWei, cmpWei:cmpWei, cmpWeiDesc:cmpWeiDesc, shortAddr:shortAddr,
+  toMs:toMs, relTime:relTime,
+  normalizeClaim:normalizeClaim, extractClaims:extractClaims, deriveStatus:deriveStatus,
+  normalizeBounty:normalizeBounty,
+  matchesQuery:matchesQuery, applyFilters:applyFilters, sortBounties:sortBounties,
+  aggregate:aggregate, rankBoard:rankBoard,
+  pool:pool, discoverMaxId:discoverMaxId,
+  encodeUint:encodeUint, encodeAddress:encodeAddress, encodeCall:encodeCall,
+  words:words, decodeTuple:decodeTuple, decodeStringAt:decodeStringAt,
+  encodeState:encodeState, decodeState:decodeState
+};
+
+if(typeof globalThis !== "undefined") globalThis.PoidhCore = CORE;
+})();
+/* @core-end */
+</script>
+
+<script>
+/* ==========================================================================
+   NET — transport, payload sniffing, cache, onchain fallback.
+   Pure factories that take an injected fetch, so the Node harness can drive
+   this against a local mock POIDH server. Extracted between @net markers.
+   ========================================================================== */
+/* @net-begin */
+(function(){
+"use strict";
+var C = globalThis.PoidhCore;
+
+/* --------------------------------------------------------------------------
+   PAYLOAD SNIFFING
+   The documented endpoint is /[chain]/bounty/[id]/data. If it ever answers
+   with a rendered page instead of JSON, give up gracefully rather than
+   showing the user a broken sheet: try JSON, then Next.js's embedded data
+   island, then the first balanced JSON object that looks like a bounty.
+   -------------------------------------------------------------------------- */
+
+function looksLikeBounty(o){
+  if(!C.isObj(o) && !Array.isArray(o)) return false;
+  var probe = Array.isArray(o) ? o[0] : o;
+  if(!C.isObj(probe)) return false;
+  return ("title" in probe) || ("name" in probe) || ("description" in probe) ||
+         ("amount" in probe) || ("issuer" in probe) || ("bounty" in probe) ||
+         ("data" in probe) || ("claims" in probe);
+}
+
+/** Scan for a balanced {...} starting at or after `from` that parses. */
+function firstJsonObject(text, from){
+  var i = text.indexOf("{", from || 0);
+  var guard = 0;
+  while(i !== -1 && guard++ < 200){
+    var depth = 0, inStr = false, esc = false, end = -1;
+    for(var j=i;j<text.length;j++){
+      var ch = text[j];
+      if(inStr){
+        if(esc) esc = false;
+        else if(ch === "\\") esc = true;
+        else if(ch === '"') inStr = false;
+        continue;
+      }
+      if(ch === '"') inStr = true;
+      else if(ch === "{") depth++;
+      else if(ch === "}"){ depth--; if(depth === 0){ end = j; break; } }
+    }
+    if(end !== -1){
+      var slice = text.slice(i, end + 1);
+      try{
+        var parsed = JSON.parse(slice);
+        if(looksLikeBounty(parsed)) return parsed;
+      }catch(e){}
+    }
+    i = text.indexOf("{", i + 1);
+  }
+  return null;
+}
+
+/**
+ * @returns { data, how } where how is "json" | "next-data" | "scraped"
+ *          or null if nothing usable was found.
+ */
+function parsePayload(text){
+  if(typeof text !== "string" || text.trim() === "") return null;
+  var t = text.trim();
+
+  if(t[0] === "{" || t[0] === "["){
+    try{ return { data: JSON.parse(t), how: "json" }; }catch(e){}
+  }
+  var nd = t.match(/<script[^>]+id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+  if(nd){
+    try{
+      var obj = JSON.parse(nd[1]);
+      var inner = C.pick(obj, ["props.pageProps.bounty","props.pageProps.data","props.pageProps"]);
+      return { data: inner !== undefined ? inner : obj, how: "next-data" };
+    }catch(e){}
+  }
+  var scraped = firstJsonObject(t, 0);
+  if(scraped) return { data: scraped, how: "scraped" };
+  return null;
+}
+
+/* --------------------------------------------------------------------------
+   HTTP DATA SOURCE
+   -------------------------------------------------------------------------- */
+
+var NotFound = "not-found";
+
+function createDataSource(opts){
+  var o = opts || {};
+  var base = o.base === undefined ? "https://poidh.xyz" : o.base;
+  var fetchImpl = o.fetchImpl || (typeof fetch !== "undefined" ? fetch.bind(globalThis) : null);
+  var timeoutMs = o.timeoutMs || 12000;
+
+  function url(chain, id){ return base + "/" + chain + "/bounty/" + id + "/data"; }
+
+  function get(chain, id, signal){
+    if(!fetchImpl) return Promise.reject(new Error("no fetch available"));
+    var ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var timer = null;
+    if(ctl){
+      timer = setTimeout(function(){ ctl.abort(); }, timeoutMs);
+      if(signal){
+        if(signal.aborted) ctl.abort();
+        else signal.addEventListener("abort", function(){ ctl.abort(); }, { once:true });
+      }
+    }
+    var t0 = Date.now();
+    return fetchImpl(url(chain, id), {
+      signal: ctl ? ctl.signal : undefined,
+      headers: { "accept":"application/json,text/plain,*/*" },
+      redirect: "follow"
+    }).then(function(res){
+      if(timer) clearTimeout(timer);
+      if(res.status === 404 || res.status === 410){
+        var e404 = new Error(NotFound); e404.code = NotFound; throw e404;
+      }
+      if(!res.ok){
+        var e = new Error("http " + res.status); e.status = res.status; throw e;
+      }
+      return res.text().then(function(text){
+        var p = parsePayload(text);
+        if(!p){
+          var pe = new Error("unparseable payload"); pe.code = "unparseable"; throw pe;
+        }
+        // An empty object is the API's way of saying "no such bounty".
+        if(C.isObj(p.data) && Object.keys(p.data).length === 0){
+          var en = new Error(NotFound); en.code = NotFound; throw en;
+        }
+        return { raw: p.data, how: p.how, ms: Date.now() - t0 };
+      });
+    }, function(err){
+      if(timer) clearTimeout(timer);
+      // A thrown TypeError with no status is the shape a CORS block takes.
+      if(err && err.name === "TypeError") err.code = "network-or-cors";
+      throw err;
+    });
+  }
+
+  return {
+    name: "poidh.xyz",
+    url: url,
+    get: get,
+    exists: function(chain, id, signal){
+      return get(chain, id, signal).then(function(){ return true; }, function(err){
+        if(err && err.code === NotFound) return false;
+        throw err;
+      });
+    }
+  };
+}
+
+/* --------------------------------------------------------------------------
+   ONCHAIN FALLBACK
+
+   Status: transport and codec are implemented and unit-tested. The path is
+   NOT armed, because the POIDH contract address and the exact return layout
+   of its bounty getter could not be verified while this file was written,
+   and a guessed selector would silently return wrong numbers.
+
+   To arm it, supply both of these (see README):
+     • CHAINS[chain].contract  — the POIDH contract address
+     • ONCHAIN.selector        — 4-byte selector of the id -> bounty getter
+     • ONCHAIN.returns         — ordered ABI types that getter returns
+     • ONCHAIN.map             — index -> canonical field name
+   or pass ?contract.base=0x…&selector=0x…&returns=uint256,address,string
+   -------------------------------------------------------------------------- */
+
+var ONCHAIN = { selector:null, returns:null, map:null };
+
+function createRpcSource(opts){
+  var o = opts || {};
+  var fetchImpl = o.fetchImpl || (typeof fetch !== "undefined" ? fetch.bind(globalThis) : null);
+  var conf = o.onchain || ONCHAIN;
+  var chains = o.chains || C.CHAINS;
+  var idc = 0;
+
+  function armedFor(chain){
+    var cc = chains[chain];
+    return !!(cc && cc.contract && conf.selector && conf.returns && conf.returns.length);
+  }
+
+  function rpc(chain, method, params){
+    var cc = chains[chain];
+    if(!cc || !cc.rpc || !cc.rpc.length) return Promise.reject(new Error("no rpc for " + chain));
+    var urls = cc.rpc.slice();
+    function tryNext(i){
+      if(i >= urls.length) return Promise.reject(new Error("all rpc endpoints failed"));
+      return fetchImpl(urls[i], {
+        method:"POST",
+        headers:{ "content-type":"application/json" },
+        body: JSON.stringify({ jsonrpc:"2.0", id: ++idc, method: method, params: params })
+      }).then(function(r){
+        if(!r.ok) throw new Error("rpc http " + r.status);
+        return r.json();
+      }).then(function(j){
+        if(j.error) throw new Error("rpc: " + (j.error.message || "error"));
+        return j.result;
+      }).catch(function(){ return tryNext(i + 1); });
+    }
+    return tryNext(0);
+  }
+
+  function get(chain, id){
+    if(!armedFor(chain)){
+      var e = new Error("onchain fallback not configured");
+      e.code = "not-configured";
+      return Promise.reject(e);
+    }
+    var t0 = Date.now();
+    var data = C.encodeCall(conf.selector, [id]);
+    return rpc(chain, "eth_call", [{ to: chains[chain].contract, data: data }, "latest"])
+      .then(function(hex){
+        if(!hex || hex === "0x"){
+          var en = new Error(NotFound); en.code = NotFound; throw en;
+        }
+        var vals = C.decodeTuple(hex, conf.returns);
+        var raw = {};
+        var map = conf.map || {};
+        for(var i=0;i<vals.length;i++){
+          var name = map[i] || ("f" + i);
+          raw[name] = typeof vals[i] === "bigint" ? vals[i].toString() : vals[i];
+        }
+        return { raw: raw, how: "onchain", ms: Date.now() - t0 };
+      });
+  }
+
+  return { name:"onchain", get:get, armedFor:armedFor, rpc:rpc, config:conf };
+}
+
+/* --------------------------------------------------------------------------
+   CACHE
+   IndexedDB when available, in-memory otherwise. Stores the *raw* payload
+   and re-normalises on read, so an adapter fix applies to cached rows too.
+   Parsed-JSON payloads are acyclic, so they clone safely.
+   -------------------------------------------------------------------------- */
+
+function createCache(opts){
+  var o = opts || {};
+  var name = o.name || "poidh-contact-sheet";
+  var store = "bounties";
+  var mem = new Map();
+  var dbp = null;
+  var idb = o.indexedDB || (typeof indexedDB !== "undefined" ? indexedDB : null);
+
+  function open(){
+    if(!idb) return Promise.resolve(null);
+    if(dbp) return dbp;
+    dbp = new Promise(function(res){
+      var req;
+      try{ req = idb.open(name, 1); }catch(e){ return res(null); }
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        if(!db.objectStoreNames.contains(store)) db.createObjectStore(store, { keyPath:"key" });
+      };
+      req.onsuccess = function(){ res(req.result); };
+      req.onerror = function(){ res(null); };
+      req.onblocked = function(){ res(null); };
+    });
+    return dbp;
+  }
+
+  function tx(mode, fn){
+    return open().then(function(db){
+      if(!db) return null;
+      return new Promise(function(res){
+        var t, s;
+        try{ t = db.transaction(store, mode); s = t.objectStore(store); }
+        catch(e){ return res(null); }
+        var out = fn(s);
+        t.oncomplete = function(){ res(out && out.result !== undefined ? out.result : null); };
+        t.onerror = function(){ res(null); };
+        t.onabort = function(){ res(null); };
+      });
+    }).catch(function(){ return null; });
+  }
+
+  return {
+    backend: function(){ return idb ? "indexeddb" : "memory"; },
+    put: function(rec){
+      mem.set(rec.key, rec);
+      return tx("readwrite", function(s){ try{ s.put(rec); }catch(e){} });
+    },
+    putMany: function(recs){
+      for(var i=0;i<recs.length;i++) mem.set(recs[i].key, recs[i]);
+      return tx("readwrite", function(s){
+        for(var i=0;i<recs.length;i++){ try{ s.put(recs[i]); }catch(e){} }
+      });
+    },
+    all: function(){
+      if(!idb) return Promise.resolve(Array.from(mem.values()));
+      return tx("readonly", function(s){ return s.getAll(); }).then(function(rows){
+        if(!rows) return Array.from(mem.values());
+        for(var i=0;i<rows.length;i++) mem.set(rows[i].key, rows[i]);
+        return rows;
+      });
+    },
+    get: function(key){
+      if(mem.has(key)) return Promise.resolve(mem.get(key));
+      return tx("readonly", function(s){ return s.get(key); });
+    },
+    clear: function(){
+      mem.clear();
+      return tx("readwrite", function(s){ try{ s.clear(); }catch(e){} });
+    }
+  };
+}
+
+var NET = {
+  parsePayload:parsePayload, firstJsonObject:firstJsonObject, looksLikeBounty:looksLikeBounty,
+  createDataSource:createDataSource, createRpcSource:createRpcSource, createCache:createCache,
+  ONCHAIN:ONCHAIN, NotFound:NotFound
+};
+if(typeof globalThis !== "undefined") globalThis.PoidhNet = NET;
+})();
+/* @net-end */
+</script>
+
+<script>
+/* ==========================================================================
+   UI — the contact sheet. DOM only; all logic lives in core/net above.
+   Untrusted strings (bounty titles, descriptions, claim text) are written
+   with textContent only. Image sources pass through core.imageUrl(), which
+   accepts http(s)/data:image/ipfs shapes and rejects everything else.
+   ========================================================================== */
+(function(){
+"use strict";
+var C = globalThis.PoidhCore, N = globalThis.PoidhNet;
+
+/* ---------- dom helpers ---------- */
+function el(id){ return document.getElementById(id); }
+function h(tag, attrs, kids){
+  var e = document.createElement(tag), k, v, i, c;
+  if(attrs) for(k in attrs){
+    if(!Object.prototype.hasOwnProperty.call(attrs,k)) continue;
+    v = attrs[k];
+    if(v === null || v === undefined) continue;
+    if(k === "class") e.className = v;
+    else if(k === "text") e.textContent = v;          // the safe path for data
+    else if(k === "svg") e.innerHTML = v;             // literal markup only
+    else if(k.slice(0,2) === "on") e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  if(kids) for(i=0;i<kids.length;i++){
+    c = kids[i];
+    if(c === null || c === undefined || c === false) continue;
+    e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+/* ---------- tuning ---------- */
+var TTL_LIVE     = 10 * 60 * 1000;          // open / in-review: recheck often
+var TTL_TERMINAL = 7 * 24 * 3600 * 1000;    // paid / cancelled: near-immutable
+var SOFT_CAP     = 1500;                    // ids per chain per pass
+var CONCURRENCY  = 12;
+var RENDER_CAP   = 900;                     // frames built at once
+var BREAKER      = 12;                      // consecutive net failures -> stop
+
+/* ---------- state ---------- */
+var params = (location.hash.slice(1) || location.search.slice(1));
+var state  = C.decodeState(params);
+var store  = new Map();      // key -> Bounty
+var maxIds = {};
+var diagLines = [];
+
+/* Runtime overrides, so the sheet can be pointed at a mirror or have the
+   onchain path armed without editing this file:
+     ?api=https://mirror.example
+     ?contract.base=0x…&selector=0x…&returns=uint256,address,string&map=amount,issuer,title
+   window.POIDH_API_BASE is honoured too (the test harness uses it). */
+function readOverrides(){
+  var p;
+  try{ p = new URLSearchParams(location.search.slice(1)); }catch(e){ p = new URLSearchParams(""); }
+  var o = { api:undefined, armed:false };
+
+  var api = p.get("api") ||
+    (typeof globalThis.POIDH_API_BASE === "string" ? globalThis.POIDH_API_BASE : null);
+  if(api && /^https?:\/\//i.test(api)) o.api = api.replace(/\/+$/,"");
+
+  C.CHAIN_ORDER.forEach(function(slug){
+    var addr = p.get("contract." + slug);
+    if(addr && C.isAddress(addr)) C.CHAINS[slug].contract = addr;
+  });
+
+  var sel = p.get("selector"), rets = p.get("returns"), mp = p.get("map");
+  if(sel && /^0x[0-9a-fA-F]{8}$/.test(sel) && rets){
+    var types = rets.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+    var names = (mp || "").split(",").map(function(s){ return s.trim(); });
+    var map = {};
+    for(var i=0;i<names.length;i++) if(names[i]) map[i] = names[i];
+    N.ONCHAIN.selector = sel; N.ONCHAIN.returns = types; N.ONCHAIN.map = map;
+    o.armed = true;
+  }
+  return o;
+}
+
+var ov     = readOverrides();
+var cache  = N.createCache({});
+var ds     = N.createDataSource(ov.api ? { base: ov.api } : {});
+var rpc    = N.createRpcSource({});
+var abort  = new AbortController();
+var loading = false, crawlTotal = 0, crawlDone = 0;
+var showAll = false;
+var sourceBroken = false;
+var pendingWrites = [];
+/* Provenance counters. When the live read fails the app has to tell the visitor
+   where the frames they are looking at actually came from, and "cache" and
+   "bundled snapshot" are different claims — one implies they have been here
+   before, the other does not. Conflating them would be a false statement. */
+var fromCache = 0, fromSnapshot = 0;
+/* Ids that failed every attempt. A crawler that quietly drops these reports 88
+   bounties as if that were the whole roll, which is a false claim about
+   completeness — so they are counted and surfaced. */
+var unreadable = {};
+
+/* Read one bounty, preferring the documented endpoint and falling back to the
+   contract if that path is armed. "not-found" is authoritative from either. */
+function getBounty(chain, id){
+  return ds.get(chain, id).catch(function(err){
+    if(err && err.code === N.NotFound) throw err;
+    if(rpc.armedFor(chain)) return rpc.get(chain, id);
+    throw err;
+  });
+}
+/* Id discovery is a single point of failure: crawlChain cannot start without a
+   max id, so one dropped probe used to cost the whole chain. Individual bounty
+   reads already get retries from C.pool; discovery deserves the same. Only
+   transient transport failures are retried — "not found" resolves false rather
+   than throwing, so a genuine miss still ends the ramp immediately. */
+function retryTransient(fn, tries, delayMs){
+  return fn().catch(function(err){
+    var transient = err && (err.code === "network-or-cors" || err.code === "unparseable" || err.code === "timeout");
+    if(!transient || tries <= 1 || abort.signal.aborted) throw err;
+    return new Promise(function(res){ setTimeout(res, delayMs); })
+      .then(function(){ return retryTransient(fn, tries - 1, delayMs * 2); });
+  });
+}
+function existsBounty(chain, id){
+  return retryTransient(function(){
+    return ds.exists(chain, id).catch(function(err){
+      if(!rpc.armedFor(chain)) throw err;
+      return rpc.get(chain, id).then(function(){ return true; }, function(e){
+        if(e && e.code === N.NotFound) return false;
+        throw e;
+      });
+    });
+  }, 3, 300);
+}
+
+/* ---------- diagnostics ---------- */
+function diag(label, msg, tone){
+  diagLines.push({ label:label, msg:msg, tone:tone || "" });
+  if(diagLines.length > 200) diagLines.shift();
+  renderDiag();
+}
+function renderDiag(){
+  var box = el("diagBody");
+  if(!box) return;
+  var frag = document.createDocumentFragment();
+  frag.appendChild(h("div",{class:"ln"},[
+    h("b",{text:"cache"}), h("span",{text:cache.backend()})
+  ]));
+  frag.appendChild(h("div",{class:"ln"},[
+    h("b",{text:"onchain"}),
+    h("span",{class: rpc.armedFor("base") ? "ok" : "", text: rpc.armedFor("base") ? "armed" : "not configured"})
+  ]));
+  for(var i=diagLines.length-1;i>=0;i--){
+    var d = diagLines[i];
+    frag.appendChild(h("div",{class:"ln"},[
+      h("b",{text:d.label}), h("span",{class:d.tone, text:d.msg})
+    ]));
+  }
+  box.replaceChildren(frag);
+}
+
+/* ---------- store ---------- */
+function all(){ return Array.from(store.values()); }
+
+function ingest(chain, id, raw, fetchedAt){
+  var b;
+  try{ b = C.normalizeBounty(raw, chain, id); }
+  catch(e){ return null; }
+  store.set(b.key, b);
+  pendingWrites.push({ key:b.key, chain:chain, id:id, raw:raw,
+                       status:b.status, fetchedAt: fetchedAt || Date.now() });
+  return b;
+}
+
+function flushWrites(){
+  if(!pendingWrites.length) return;
+  var batch = pendingWrites.splice(0, pendingWrites.length);
+  cache.putMany(batch);
+}
+
+function fresh(rec){
+  if(!rec || !rec.raw) return false;
+  var age = Date.now() - (rec.fetchedAt || 0);
+  var terminal = rec.status === "paid" || rec.status === "cancelled";
+  return age < (terminal ? TTL_TERMINAL : TTL_LIVE);
+}
+
+/* ---------- filters from state ---------- */
+function filters(){
+  return {
+    chains: state.chains, statuses: state.statuses, q: state.q,
+    withProofOnly: state.withProofOnly, minWei: state.minWei, sort: state.sort
+  };
+}
+function syncUrl(){
+  var qs = C.encodeState(state);
+  var next = location.pathname + location.search + (qs ? "#" + qs : "");
+  history.replaceState(null, "", next);
+}
+function setState(patch){
+  for(var k in patch){ if(Object.prototype.hasOwnProperty.call(patch,k)) state[k] = patch[k]; }
+  if("minEth" in patch){
+    state.minWei = (state.minEth && /^\d*\.?\d+$/.test(state.minEth))
+      ? C.decimalToWei(state.minEth, 18) : null;
+  }
+  showAll = false;
+  syncUrl();
+  renderAll();
+}
+
+/* ---------- rail ---------- */
+function renderRail(){
+  var list = all();
+  var byChain = {}, byStatus = {}, i, b;
+  for(i=0;i<list.length;i++){
+    b = list[i];
+    byChain[b.chain] = (byChain[b.chain]||0)+1;
+    byStatus[b.status] = (byStatus[b.status]||0)+1;
+  }
+
+  function toggleIn(arr, v){
+    var n = arr.slice(), ix = n.indexOf(v);
+    if(ix === -1) n.push(v); else n.splice(ix,1);
+    return n;
+  }
+
+  var chainOpts = C.CHAIN_ORDER.map(function(slug){
+    var on = state.chains.indexOf(slug) !== -1;
+    return h("button",{class:"opt", type:"button", "aria-pressed": on ? "true":"false",
+      onclick:function(){
+        var next = toggleIn(state.chains, slug);
+        if(!next.length) next = C.CHAIN_ORDER.slice();   // never show nothing
+        setState({ chains: next });
+      }},[
+      h("span",{text:C.CHAINS[slug].label}),
+      h("span",{class:"ct", text:String(byChain[slug]||0)})
+    ]);
+  });
+
+  var STAT_ORDER = ["open","review","paid","cancelled"];
+  var statusOpts = STAT_ORDER.map(function(s){
+    var meta = C.STATUS_META[s];
+    var on = state.statuses.indexOf(s) !== -1;
+    var dotColor = s==="paid" ? "var(--cyan)" : s==="review" ? "var(--amber)"
+                 : s==="cancelled" ? "var(--bleach)" : "var(--latent)";
+    var dot = h("span",{class:"dot"});
+    dot.style.background = dotColor;
+    return h("button",{class:"opt", type:"button", "aria-pressed": on?"true":"false",
+      title: meta.hint,
+      onclick:function(){ setState({ statuses: toggleIn(state.statuses, s) }); }},[
+      dot, h("span",{text:meta.label}),
+      h("span",{class:"ct", text:String(byStatus[s]||0)})
+    ]);
+  });
+
+  var sortSel = h("select",{class:"field","aria-label":"Sort the roll",
+    onchange:function(e){ setState({ sort: e.target.value }); }},
+    [["reward-desc","Reward, high to low"],["reward-asc","Reward, low to high"],
+     ["newest","Newest first"],["oldest","Oldest first"],
+     ["claims-desc","Most proof submitted"],["id-desc","Frame number, high to low"],
+     ["id-asc","Frame number, low to high"]].map(function(o){
+      return h("option",{value:o[0], text:o[1], selected: state.sort===o[0] ? "selected" : null});
+    }));
+
+  var search = h("input",{class:"field", type:"search", value:state.q,
+    placeholder:"title, address, or #id", "aria-label":"Search the roll"});
+  var tq = null;
+  search.addEventListener("input", function(e){
+    var v = e.target.value;
+    clearTimeout(tq);
+    tq = setTimeout(function(){ setState({ q:v }); }, 180);
+  });
+
+  var minInput = h("input",{class:"field", type:"text", inputmode:"decimal",
+    value:state.minEth, placeholder:"0.0", "aria-label":"Minimum reward"});
+  var tm = null;
+  minInput.addEventListener("input", function(e){
+    var v = e.target.value.trim();
+    clearTimeout(tm);
+    tm = setTimeout(function(){ setState({ minEth:v }); }, 250);
+  });
+
+  var proofToggle = h("button",{class:"opt", type:"button",
+    "aria-pressed": state.withProofOnly ? "true":"false",
+    onclick:function(){ setState({ withProofOnly: !state.withProofOnly }); }},[
+    h("span",{text:"Only developed frames"})
+  ]);
+
+  el("rail").replaceChildren(
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"Search"}), search ]),
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"Chain"}), h("div",{class:"opts"},chainOpts) ]),
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"State"}), h("div",{class:"opts"},statusOpts) ]),
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"Proof"}), h("div",{class:"opts"},[proofToggle]) ]),
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"Minimum reward"}), minInput ]),
+    h("div",{class:"rail-sec"},[ h("span",{class:"edge",text:"Order"}), sortSel ]),
+    h("div",{class:"rail-sec"},[
+      h("button",{class:"btn", type:"button", text:"Clear filters",
+        onclick:function(){
+          setState({ chains:C.CHAIN_ORDER.slice(), statuses:[], q:"",
+                     withProofOnly:false, minEth:"", minWei:null });
+          renderRail();
+        }})
+    ])
+  );
+}
+
+/* ---------- a frame on the roll ---------- */
+function unexposedEl(b, unreachable){
+  return h("div",{class:"unexposed"},[
+    h("div",{class:"latent-title", text:b.title}),
+    h("span",{class:"stamp", text: unreachable ? "proof unreachable" : "not yet exposed"})
+  ]);
+}
+
+function retryImage(img, b){
+  var n = parseInt(img.getAttribute("data-gw")||"0",10) + 1;
+  var m = /\/ipfs\/(.+)$/.exec(img.getAttribute("src")||"");
+  if(m && n < C.IPFS_GATEWAYS.length){
+    img.setAttribute("data-gw", String(n));
+    img.src = C.IPFS_GATEWAYS[n] + m[1];
+    return;
+  }
+  var win = img.parentNode;
+  if(win) win.replaceChildren(unexposedEl(b, true));
+}
+
+var KEEPER_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">'
+  + '<circle cx="12" cy="12" r="9" fill="none" stroke="#46B7C2" stroke-width="2.2" '
+  + 'stroke-linecap="round" stroke-dasharray="50 9" transform="rotate(-24 12 12)"/></svg>';
+
+function frameEl(b){
+  var meta = C.STATUS_META[b.status] || C.STATUS_META.unknown;
+  var win = h("div",{class:"win"});
+
+  if(b.proofImage){
+    var img = h("img",{ alt:"Proof submitted for: " + b.title, loading:"lazy",
+                        decoding:"async", "data-gw":"0" });
+    img.addEventListener("load", function(){ img.classList.add("developed"); });
+    img.addEventListener("error", function(){ retryImage(img, b); });
+    img.src = b.proofImage;
+    win.appendChild(img);
+  }else{
+    win.appendChild(unexposedEl(b, false));
+  }
+  if(b.status === "paid") win.appendChild(h("div",{class:"keeper", svg:KEEPER_SVG}));
+
+  var label = b.title + " — " + b.amountDisplay + " " + b.currency
+            + ", " + meta.label + ", on " + b.chainLabel;
+
+  return h("button",{ class:"frame", type:"button", "data-state":b.status,
+      "aria-label":label, onclick:function(){ openLoupe(b.key); } },[
+    h("div",{class:"sprock"},[
+      h("span",{class:"fno", text:"#"+b.id}),
+      h("div",{class:"holes"})
+    ]),
+    h("div",{class:"body"},[
+      win,
+      h("div",{class:"cap"},[
+        h("h3",{text:b.title}),
+        h("div",{class:"meta"},[
+          h("span",{class:"reward"},[
+            document.createTextNode(b.amountDisplay),
+            h("small",{text:b.currency})
+          ]),
+          h("span",{class:"pill "+meta.tone, text:meta.label}),
+          h("span",{class:"chainmark", text:b.chainLabel})
+        ])
+      ])
+    ])
+  ]);
+}
+
+/* ---------- sheet ---------- */
+function renderSheet(){
+  var f = filters();
+  var shown = C.sortBounties(C.applyFilters(all(), f), f.sort);
+  var sheet = el("sheet");
+  var frag = document.createDocumentFragment();
+
+  if(!shown.length){
+    if(loading){
+      for(var s=0;s<12;s++) frag.appendChild(h("div",{class:"skel"}));
+    }else if(!store.size){
+      frag.appendChild(h("div",{class:"empty"},[
+        h("span",{class:"edge",text:"Empty roll"}),
+        h("p",{text: sourceBroken
+          ? "No bounty data could be read, and nothing is cached yet. See Data sources at the bottom right for what failed."
+          : "No bounties loaded yet."})
+      ]));
+    }else{
+      frag.appendChild(h("div",{class:"empty"},[
+        h("span",{class:"edge",text:"Nothing matches"}),
+        h("p",{text:"No frames match these filters. Widen the reward range or clear the filters in the sidebar."})
+      ]));
+    }
+    sheet.replaceChildren(frag);
+    renderSubhead(0, 0);
+    return;
+  }
+
+  var limit = showAll ? shown.length : Math.min(shown.length, RENDER_CAP);
+  for(var i=0;i<limit;i++) frag.appendChild(frameEl(shown[i]));
+  sheet.replaceChildren(frag);
+
+  if(limit < shown.length){
+    var more = h("div",{class:"empty"},[
+      h("button",{class:"btn", type:"button",
+        text:"Print the remaining " + (shown.length - limit) + " frames",
+        onclick:function(){ showAll = true; renderSheet(); }})
+    ]);
+    sheet.appendChild(more);
+  }
+  renderSubhead(shown.length, limit);
+}
+
+function renderSubhead(count, limit){
+  var t = el("subhead");
+  if(!t) return;
+  var parts = [];
+  if(loading) parts.push("Developing the roll…");
+  parts.push(count === store.size
+    ? (count + (count === 1 ? " bounty" : " bounties"))
+    : (count + " of " + store.size + " shown"));
+  if(limit && limit < count) parts.push("first " + limit + " printed");
+  var chains = state.chains.length === C.CHAIN_ORDER.length
+    ? "all chains" : state.chains.map(function(c){ return C.CHAINS[c].label; }).join(" + ");
+  parts.push(chains);
+  t.textContent = parts.join(" · ");
+}
+
+/* ---------- top bar stats ---------- */
+function renderBar(){
+  var f = filters();
+  var shown = C.applyFilters(all(), f);
+  var agg = C.aggregate(shown);
+  var kids = [];
+
+  kids.push(h("div",{class:"stat"},[
+    h("u",{text:"frames"}), h("b",{text:String(agg.count)})
+  ]));
+
+  var curs = Object.keys(agg.totals).sort();
+  for(var i=0;i<curs.length && i<2;i++){
+    kids.push(h("div",{class:"stat"},[
+      h("u",{text:curs[i] + " posted"}),
+      h("b",{text:C.formatWei(agg.totals[curs[i]], 18)})
+    ]));
+  }
+  kids.push(h("div",{class:"stat"},[
+    h("u",{text:"unexposed"}), h("b",{text:String(agg.byStatus.open||0)})
+  ]));
+  kids.push(h("div",{class:"stat"},[
+    h("u",{text:"paid out"}), h("b",{text:String(agg.byStatus.paid||0)})
+  ]));
+  el("barStats").replaceChildren.apply(el("barStats"), kids);
+}
+
+/* ---------- ledger ---------- */
+function boardEl(title, rows, note){
+  return h("div",{class:"board"},[
+    h("span",{class:"edge",text:title})
+  ].concat(rows.length ? rows : [h("div",{class:"row"},[h("span",{class:"nm",text: note || "Nothing yet"})])]));
+}
+
+function renderLedger(){
+  var wrap = el("ledger");
+  var f = filters();
+  var shown = C.applyFilters(all(), f);
+  if(!shown.length){ wrap.hidden = true; return; }
+  wrap.hidden = false;
+  var agg = C.aggregate(shown);
+
+  function addrRows(board, unit){
+    return board.map(function(r, i){
+      var curs = Object.keys(r.byCur).sort();
+      var val = curs.length ? (C.formatWei(r.byCur[curs[0]],18) + " " + curs[0]) : "—";
+      return h("div",{class:"row"},[
+        h("span",{class:"rk", text:String(i+1)}),
+        h("a",{class:"nm", text:C.shortAddr(r.addr), href:"https://poidh.xyz/", target:"_blank",
+               rel:"noopener", title:r.addr + " — " + r.count + " " + unit}),
+        h("span",{class:"vl", text:val})
+      ]);
+    });
+  }
+
+  var biggest = agg.biggest.map(function(b, i){
+    return h("div",{class:"row"},[
+      h("span",{class:"rk", text:String(i+1)}),
+      h("button",{class:"nm", type:"button", text:b.title,
+        onclick:function(){ openLoupe(b.key); }}),
+      h("span",{class:"vl", text:b.amountDisplay + " " + b.currency})
+    ]);
+  });
+
+  var totalsRows = Object.keys(agg.totals).sort().map(function(cur){
+    return h("div",{class:"row"},[
+      h("span",{class:"rk", text:""}),
+      h("span",{class:"nm", text:cur + " posted"}),
+      h("span",{class:"vl", text:C.formatWei(agg.totals[cur],18)})
+    ]);
+  }).concat(Object.keys(agg.paidTotals).sort().map(function(cur){
+    return h("div",{class:"row"},[
+      h("span",{class:"rk", text:""}),
+      h("span",{class:"nm", text:cur + " paid out"}),
+      h("span",{class:"vl", text:C.formatWei(agg.paidTotals[cur],18)})
+    ]);
+  })).concat([
+    h("div",{class:"row"},[
+      h("span",{class:"rk", text:""}),
+      h("span",{class:"nm", text:"proof submitted"}),
+      h("span",{class:"vl", text:String(agg.claimsTotal)})
+    ]),
+    h("div",{class:"row"},[
+      h("span",{class:"rk", text:""}),
+      h("span",{class:"nm", text:"frames developed"}),
+      h("span",{class:"vl", text:agg.withProof + " / " + agg.count})
+    ])
+  ]);
+
+  wrap.replaceChildren(
+    h("span",{class:"edge",text:"Contact sheet ledger"}),
+    h("div",{class:"ledger-grid"},[
+      boardEl("On this sheet", totalsRows),
+      boardEl("Biggest rewards", biggest),
+      boardEl("Most bounties posted", addrRows(agg.topFunders, "posted")),
+      boardEl("Most bounties won", addrRows(agg.topEarners, "won"), "No payouts on this sheet yet")
+    ])
+  );
+}
+
+/* ---------- loupe ---------- */
+var lastFocus = null;
+
+function openLoupe(key){
+  var b = store.get(key);
+  if(!b) return;
+  lastFocus = document.activeElement;
+  state.open = key;
+  syncUrl();
+
+  var meta = C.STATUS_META[b.status] || C.STATUS_META.unknown;
+
+  var proofs = b.claims.length
+    ? h("div",{class:"proofs"}, b.claims.map(function(c){
+        var box = h("div",{class:"proof" + (c.accepted ? " accepted" : "")});
+        if(c.image){
+          var im = h("img",{ alt: c.title ? ("Proof: " + c.title) : "Submitted proof",
+                             loading:"lazy", decoding:"async", "data-gw":"0" });
+          im.addEventListener("error", function(){
+            var n = parseInt(im.getAttribute("data-gw")||"0",10)+1;
+            var mm = /\/ipfs\/(.+)$/.exec(im.getAttribute("src")||"");
+            if(mm && n < C.IPFS_GATEWAYS.length){
+              im.setAttribute("data-gw", String(n));
+              im.src = C.IPFS_GATEWAYS[n] + mm[1];
+            }else{
+              im.remove();
+              box.insertBefore(h("div",{class:"pf", text:"Image could not be loaded from IPFS."}), box.firstChild);
+            }
+          });
+          im.src = c.image;
+          box.appendChild(im);
+        }
+        box.appendChild(h("div",{class:"pf"},[
+          c.title ? h("div",{text:c.title}) : null,
+          h("div",{class:"edge", text: c.claimant ? C.shortAddr(c.claimant) : "unknown claimant"})
+        ]));
+        return box;
+      }))
+    : h("div",{class:"note"},[
+        h("b",{text:"No proof yet. "}),
+        document.createTextNode("This frame is still unexposed — nobody has submitted a picture for it.")
+      ]);
+
+  var kv = h("dl",{class:"kv"},[
+    h("dt",{text:"frame"}),    h("dd",{text:"#" + b.id + " on " + b.chainLabel}),
+    h("dt",{text:"reward"}),   h("dd",{text:b.amountDisplay + " " + b.currency}),
+    h("dt",{text:"state"}),    h("dd",{text:meta.label + " — " + meta.hint}),
+    h("dt",{text:"posted by"}),h("dd",{text: b.issuer ? b.issuer : "unknown"}),
+    h("dt",{text:"opened"}),   h("dd",{text: b.createdAt ? (new Date(b.createdAt).toISOString().slice(0,10) + " (" + C.relTime(b.createdAt) + ")") : "unknown"}),
+    h("dt",{text:"proof"}),    h("dd",{text: b.claimCount + (b.claimCount === 1 ? " submission" : " submissions")})
+  ]);
+
+  var raw = h("details",{},[
+    h("summary",{text:"Raw response for this bounty"}),
+    h("div",{class:"raw"},[ h("pre",{text: safeJson(b.raw) }) ])
+  ]);
+
+  var inner = h("div",{class:"loupe-in"},[
+    h("div",{class:"loupe-bar"},[
+      h("span",{class:"edge", text:"Frame #" + b.id + " · " + b.chainLabel}),
+      h("span",{class:"pill " + meta.tone, text:meta.label}),
+      h("div",{style:"margin-left:auto;display:flex;gap:8px"},[
+        h("button",{class:"btn", type:"button", text:"Copy link",
+          onclick:function(e){ copyLink(e.target); }}),
+        h("a",{class:"btn solid", href:b.url, target:"_blank", rel:"noopener",
+               text:"Open on poidh.xyz"}),
+        h("button",{class:"btn", type:"button", text:"Close", onclick:closeLoupe})
+      ])
+    ]),
+    h("div",{class:"loupe-body"},[
+      h("h2",{id:"loupeTitle", text:b.title}),
+      b.description ? h("p",{class:"desc", text:b.description}) : null,
+      h("div",{class:"loupe-grid"},[
+        h("div",{},[ h("span",{class:"edge",text:"Submitted proof"}), proofs ]),
+        h("div",{},[ h("span",{class:"edge",text:"Details"}), kv, raw ])
+      ])
+    ])
+  ]);
+
+  var lp = el("loupe");
+  lp.replaceChildren(inner);
+  lp.setAttribute("open","");
+  document.body.style.overflow = "hidden";
+  var btn = lp.querySelector(".btn");
+  if(btn) btn.focus();
+}
+
+function closeLoupe(){
+  var lp = el("loupe");
+  lp.removeAttribute("open");
+  lp.replaceChildren();
+  document.body.style.overflow = "";
+  state.open = "";
+  syncUrl();
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+
+/** JSON.stringify that survives BigInt and cycles. */
+function safeJson(v){
+  var seen = new WeakSet();
+  try{
+    return JSON.stringify(v, function(k, val){
+      if(typeof val === "bigint") return val.toString();
+      if(val !== null && typeof val === "object"){
+        if(seen.has(val)) return "[circular]";
+        seen.add(val);
+      }
+      return val;
+    }, 2);
+  }catch(e){ return "Could not serialise this response."; }
+}
+
+function copyLink(btn){
+  var url = location.href;
+  var done = function(okFlag){
+    if(!btn) return;
+    var prev = btn.textContent;
+    btn.textContent = okFlag ? "Link copied" : "Copy failed";
+    setTimeout(function(){ btn.textContent = prev; }, 1400);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){ done(true); }, function(){ done(false); });
+  }else{
+    try{
+      var ta = h("textarea",{}); ta.value = url;
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove(); done(true);
+    }catch(e){ done(false); }
+  }
+}
+
+/* ---------- notices ---------- */
+function notice(kids){
+  el("notices").appendChild(h("div",{class:"note"}, kids));
+}
+
+/* ---------- render orchestration ---------- */
+var renderTimer = null;
+function renderAll(){
+  renderBar(); renderSheet(); renderLedger();
+}
+function scheduleRender(){
+  if(renderTimer) return;
+  renderTimer = setTimeout(function(){
+    renderTimer = null;
+    renderBar(); renderSheet(); renderRail();
+  }, 700);
+}
+function progress(){
+  var bar = el("loadbar");
+  if(!bar) return;
+  var pct = crawlTotal ? Math.min(100, Math.round(crawlDone / crawlTotal * 100)) : 0;
+  bar.firstElementChild.style.width = pct + "%";
+  if(!loading) bar.setAttribute("data-done","1");
+}
+
+/* ---------- crawl ---------- */
+function crawlChain(chain, cacheIndex){
+  var netFails = 0, netOk = 0;
+
+  return C.discoverMaxId(function(id){ return existsBounty(chain, id); },
+                         { max:200000, signal:abort.signal })
+  .then(function(maxId){
+    maxIds[chain] = maxId;
+    if(!maxId){ diag(chain, "no bounties found", "bad"); return; }
+    diag(chain, "highest bounty id " + maxId, "ok");
+
+    var ids = [], lo = Math.max(1, maxId - SOFT_CAP + 1);
+    for(var id = maxId; id >= lo; id--){
+      if(fresh(cacheIndex[chain + ":" + id])) continue;
+      ids.push(id);
+    }
+    var skipped = (maxId - lo + 1) - ids.length;
+    if(skipped > 0) diag(chain, skipped + " served from cache", "ok");
+    if(!ids.length) return;
+
+    crawlTotal += ids.length;
+    progress();
+
+    return C.pool(ids, function(id){ return getBounty(chain, id); }, {
+      concurrency: CONCURRENCY, retries: 3, backoffMs: 400, signal: abort.signal,
+      onResult: function(r, id){
+        netOk++; netFails = 0;
+        crawlDone++;
+        ingest(chain, id, r.raw);
+        if(crawlDone % 15 === 0) flushWrites();
+        progress(); scheduleRender();
+      },
+      onError: function(err, id){
+        crawlDone++;
+        progress();
+        if(err && err.code === "not-found") return;         // a hole in the ids
+        /* Everything else is a bounty that exists but could not be read, even
+           after every retry. Record it so the shortfall can be reported
+           instead of silently shrinking the sheet. */
+        (unreadable[chain] = unreadable[chain] || []).push(id);
+        if(err && (err.code === "network-or-cors" || err.code === "unparseable")){
+          netFails++;
+          if(netFails >= BREAKER && netOk === 0){
+            sourceBroken = true;
+            abort.abort();
+            diag(chain, "stopped after " + netFails + " consecutive failures", "bad");
+          }
+        }
+      }
+    });
+  })
+  .catch(function(err){
+    diag(chain, (err && err.message) || "failed", "bad");
+    if(err && err.code === "network-or-cors") sourceBroken = true;
+  });
+}
+
+/* Optional same-origin snapshot: lets the sheet fill even if poidh.xyz is
+   unreachable. Ships absent; see README for how to generate one. */
+function loadSnapshot(){
+  return fetch("./snapshot.json", { cache:"no-cache" })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(j){
+      if(!j) return 0;
+      var rows = Array.isArray(j) ? j : (j.bounties || []);
+      var n = 0;
+      for(var i=0;i<rows.length;i++){
+        var row = rows[i];
+        if(!row || !row.chain || row.id === undefined) continue;
+        if(store.has(row.chain + ":" + row.id)) continue;
+        if(ingest(row.chain, row.id, row.raw || row, row.fetchedAt)) n++;
+      }
+      if(n) diag("snapshot", n + " bounties loaded", "ok");
+      return n;
+    })
+    .catch(function(){ return 0; });
+}
+
+/* ---------- boot ---------- */
+/* Say so when the sheet is short. Bounties that exist but could not be read
+   after every retry are invisible on a contact sheet — there is no gap to see —
+   so without this the visitor would read a partial roll as the complete set.
+   Naming the count and the chain is the difference between "here are the
+   bounties" and "here are the bounties we could reach". */
+function reportShortfall(){
+  var parts = [], n = 0;
+  for(var i=0;i<C.CHAIN_ORDER.length;i++){
+    var ch = C.CHAIN_ORDER[i], lost = unreadable[ch];
+    if(!lost || !lost.length) continue;
+    n += lost.length;
+    parts.push(lost.length + " on " + C.CHAINS[ch].label);
+    diag(ch, lost.length + " bounties unreadable after retries", "warn");
+  }
+  if(!n) return;
+  notice([
+    h("b",{text:"Incomplete read. "}),
+    document.createTextNode(parts.join(", ") + " could not be fetched after four attempts each, "
+      + "so " + (n === 1 ? "it is" : "they are") + " missing from the sheet below. "
+      + "Counts and totals reflect what was read, not what exists. Reload to try again.")
+  ]);
+}
+/* One sentence naming where the frames on screen came from. Only used when the
+   live read failed, which is exactly when a visitor deserves to know. The
+   snapshot ships with the page, so "from cache" would wrongly imply a previous
+   visit; the two sources are reported separately. */
+function provenanceSentence(){
+  if(!store.size) return "Nothing is cached and no snapshot is deployed, so the sheet is empty.";
+  if(fromSnapshot && fromCache)
+    return "The sheet below comes from the snapshot bundled with this page plus "
+         + fromCache + " bounties cached on this device.";
+  if(fromSnapshot)
+    return "The sheet below comes from snapshot.json, archived alongside this page — "
+         + "real bounty data, read at the time the snapshot was taken.";
+  return "The sheet below is from the copy cached on this device by an earlier visit.";
+}
+
+function boot(){
+  renderRail(); renderAll(); renderDiag();
+
+  // 1. Paint whatever is cached, immediately.
+  cache.all().then(function(rows){
+    var cacheIndex = {};
+    for(var i=0;i<rows.length;i++){
+      var r = rows[i];
+      if(!r || !r.key) continue;
+      cacheIndex[r.key] = r;
+      try{
+        var b = C.normalizeBounty(r.raw, r.chain, r.id);
+        store.set(b.key, b);
+      }catch(e){}
+    }
+    if(rows.length) diag("cache", rows.length + " bounties restored", "ok");
+    fromCache = store.size;
+    pendingWrites.length = 0;   // restored rows are already persisted
+    renderRail(); renderAll();
+    if(state.open && store.has(state.open)) openLoupe(state.open);
+    return cacheIndex;
+  })
+  // 2. Fill from the same-origin snapshot if one is deployed.
+  .then(function(cacheIndex){
+    return loadSnapshot().then(function(n){ fromSnapshot = n || 0; renderAll(); return cacheIndex; });
+  })
+  // 3. Go and read live data.
+  .then(function(cacheIndex){
+    loading = true;
+    renderSubhead(0,0);
+    var chains = C.CHAIN_ORDER.slice();
+    var seq = Promise.resolve();
+    chains.forEach(function(ch){
+      seq = seq.then(function(){
+        if(abort.signal.aborted) return;
+        return crawlChain(ch, cacheIndex);
+      });
+    });
+    return seq;
+  })
+  .then(function(){
+    loading = false;
+    flushWrites();
+    progress();
+    if(renderTimer){ clearTimeout(renderTimer); renderTimer = null; }
+    renderRail(); renderAll();
+    if(state.open && store.has(state.open) && !el("loupe").hasAttribute("open")) openLoupe(state.open);
+
+    if(sourceBroken){
+      notice([
+        h("b",{text:"Live read failed. "}),
+        document.createTextNode("Bounty data could not be fetched from poidh.xyz in this browser — usually a CORS restriction or an outage. "),
+        document.createTextNode(provenanceSentence()),
+        document.createTextNode(" Details are under Data sources, bottom right.")
+      ]);
+    }else if(!store.size){
+      notice([
+        h("b",{text:"No bounties came back. "}),
+        document.createTextNode("The endpoint answered but returned nothing usable. Check Data sources, bottom right.")
+      ]);
+    }else{
+      var total = 0, ks = Object.keys(maxIds);
+      for(var i=0;i<ks.length;i++) total += maxIds[ks[i]];
+      diag("done", store.size + " bounties on the sheet", "ok");
+      reportShortfall();
+    }
+  });
+
+  // interactions
+  el("btnShare").addEventListener("click", function(e){ copyLink(e.target); });
+  el("loupe").addEventListener("click", function(e){ if(e.target === el("loupe")) closeLoupe(); });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && el("loupe").hasAttribute("open")) closeLoupe();
+  });
+  window.addEventListener("hashchange", function(){
+    var next = C.decodeState(location.hash.slice(1));
+    state = next;
+    showAll = false;
+    renderRail(); renderAll();
+    if(state.open && store.has(state.open)) openLoupe(state.open); else closeLoupe();
+  });
+  window.addEventListener("beforeunload", flushWrites);
+}
+
+/* ---------- Farcaster Mini App handshake ----------
+   Best-effort, dependency-free. A Mini App host expects a "ready" signal so
+   it can dismiss its splash screen; the official SDK sends it over a
+   postMessage bridge. Loading that SDK from a CDN would add exactly the kind
+   of external dependency this build avoids, so we post the signal directly on
+   the three transports hosts are known to use. If the envelope is not what the
+   current host expects the message is simply ignored, and the page still works
+   as an ordinary web page — which is all the shared cast link needs.
+   UNVERIFIED: no Farcaster host was available to test this against. */
+function farcasterReady(){
+  var msg = { type:"frame_ready", data:{} };
+  var jsonrpc = { jsonrpc:"2.0", id:1, method:"ready", params:{} };
+  try{ if(window.parent && window.parent !== window){
+    window.parent.postMessage(msg, "*"); window.parent.postMessage(jsonrpc, "*");
+  } }catch(e){}
+  try{ if(window.ReactNativeWebView){
+    window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+  } }catch(e){}
+  try{ if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.miniapp){
+    window.webkit.messageHandlers.miniapp.postMessage(msg);
+  } }catch(e){}
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", function(){ boot(); farcasterReady(); });
+}else{ boot(); farcasterReady(); }
+
+})();
+</script>
+</body>
+</html>
