@@ -29,8 +29,9 @@ export function ChainIcon({ chain, size = "md", className }: ChainIconProps) {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={cn(sz, "flex-shrink-0 inline-block", className)}
-        title="Base Network"
+        aria-label="Base Network"
       >
+        <title>Base Network</title>
         <circle cx="57.5" cy="57.5" r="57.5" fill="#0052FF" />
         <path
           fillRule="evenodd"
@@ -62,8 +63,9 @@ export function ChainIcon({ chain, size = "md", className }: ChainIconProps) {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={cn(sz, "flex-shrink-0 inline-block", className)}
-        title="Ethereum Mainnet"
+        aria-label="Ethereum Mainnet"
       >
+        <title>Ethereum Mainnet</title>
         <circle cx="16" cy="16" r="16" fill="#627EEA" />
         <g fill="#FFFFFF">
           <path d="M16 4.5L15.86 4.97V18.17L16 18.31L21.58 15.09L16 4.5Z" fillOpacity="0.8" />

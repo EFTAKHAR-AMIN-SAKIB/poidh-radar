@@ -32,3 +32,4 @@ next-env.d.ts
 # Scratch & Temporary files
 /scratch/
 scratch_chunk.js
+scripts/github-push.mjs

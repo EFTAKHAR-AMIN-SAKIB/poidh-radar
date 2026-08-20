@@ -42,12 +42,13 @@ Indexes bounties continuously across all major POIDH-supported networks:
 - **💙 Arbitrum One:** Flagship Ethereum L2 scaling solution.
 - **⟠ Ethereum Mainnet:** The decentralized settlement layer for high-value coordinate actions.
 
-### 3. 🌌 Interactive "Bounty Universe" (Orbital Canvas)
-An interactive 2D orbital canvas that maps active bounties in a visual solar system:
-- Grouped by network orbit tracks.
-- Node size proportional to reward magnitude.
-- Glowing terracotta nodes highlight high Radar Score opportunities.
-- Hover inspect with instant preview tooltips and click-to-view navigation.
+### 3. 🌌 Interactive "Bounty Universe" (Orbital Constellation)
+An interactive high-DPI 2D orbital canvas mapping active onchain bounties in a dynamic multi-chain galaxy:
+- **Central Network Hubs:** Embedded official vector & badge logos for **Base**, **Degen**, **Arbitrum**, and **Ethereum Mainnet** with active ambient auras.
+- **Chain-Matched Dot Colors:** Orbiting bounty nodes are color-coded to their parent network (Base Blue, Degen Purple, Arbitrum Cyan, Ethereum Slate).
+- **High Radar Score Highlighting:** Bounties with Radar Score 80+ pulse with luminous halos and radiant spark cores.
+- **Interactive Laser Target Rays:** Hovering any bounty projects a dashed laser beam back to its home network cluster.
+- **Live Tooltip Previews:** Instant hover cards with rewards, claim counts, status, and direct navigation.
 
 ### 4. 🔍 Deep Explorer & Filter Rail
 - Instant full-text search across titles, descriptions, issuer addresses, and tags.

@@ -16,7 +16,7 @@ export const CHAIN_ID_TO_SLUG: Record<number | string, ChainSlug> = {
   42161: "arbitrum",
   1: "mainnet",
   666666666: "degen",
-  0x27bc86aa: "degen",
+  "0x27bc86aa": "degen",
   base: "base",
   arbitrum: "arbitrum",
   mainnet: "mainnet",
@@ -139,7 +139,15 @@ export function normalizeBounty(
     "base";
 
   const chain = CHAINS[detectedChain] || CHAINS.base;
-  const numId = Number(raw.id ?? raw.onChainId ?? fallbackId ?? 1);
+  
+  let numId: number;
+  if (raw.id !== undefined && raw.id !== null) {
+    numId = Number(raw.id);
+  } else if (raw.onChainId !== undefined && raw.onChainId !== null) {
+    numId = Number(raw.onChainId) + (chain.v2Offset || 0);
+  } else {
+    numId = Number(fallbackId ?? 1);
+  }
 
   // Normalize claims
   const rawClaims: any[] = Array.isArray(raw.claims)
@@ -169,7 +177,10 @@ export function normalizeBounty(
 
   const currency = raw.currency ? raw.currency.toUpperCase() : chain.nativeCurrency;
   const status = deriveStatus(raw, claims);
-  const createdAt = parseTimestamp(raw.createdAt || raw.created_at || raw.timestamp);
+  let createdAt = parseTimestamp(raw.createdAt || raw.created_at || raw.timestamp);
+  if (!createdAt && (status === "open" || status === "review")) {
+    createdAt = Date.now();
+  }
   const isMultiplayer = raw.isMultiplayer === true || raw.multiplayer === true;
   const isVoting = raw.isVoting === true || raw.voting === true;
   const priceUsd = typeof raw.priceUsd === "number" ? raw.priceUsd : null;

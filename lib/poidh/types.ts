@@ -15,6 +15,9 @@ export interface ChainConfig {
   explorerUrl: string;
   poidhUrl: string;
   description: string;
+  contractAddress: string;
+  v2Offset: number;
+  rpcUrls: string[];
 }
 
 export interface Claim {

@@ -51,7 +51,7 @@ export function ScoreBreakdownModal({
     },
     {
       name: "Verification Momentum",
-      score: b.momentum,
+      score: b.activity,
       max: 10,
       icon: Activity,
       description: "Active community proof activity and submissions indicate valid verification interest.",

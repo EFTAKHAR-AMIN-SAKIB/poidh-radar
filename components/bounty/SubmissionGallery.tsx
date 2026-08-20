@@ -328,7 +328,7 @@ export function SubmissionGallery({ bounty, claims, chainSlug }: SubmissionGalle
                   Claim ID
                 </span>
                 <span className="font-bold text-[#141413] text-sm">
-                  #{activeClaim.id || selectedIndex + 1}
+                  #{activeClaim.id || (selectedIndex !== null ? selectedIndex + 1 : 1)}
                 </span>
               </div>
 

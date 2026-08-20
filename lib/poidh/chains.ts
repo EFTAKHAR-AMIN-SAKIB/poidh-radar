@@ -14,6 +14,13 @@ export const CHAINS: Record<ChainSlug, ChainConfig> = {
     explorerUrl: "https://basescan.org",
     poidhUrl: "https://poidh.xyz/base",
     description: "Coinbase's Layer 2 Ethereum rollup, the primary home of POIDH bounties.",
+    contractAddress: "0x5555Fa783936C260f77385b4E153B9725feF1719",
+    v2Offset: 986,
+    rpcUrls: [
+      "https://mainnet.base.org",
+      "https://base.llamarpc.com",
+      "https://1rpc.io/base",
+    ],
   },
   degen: {
     slug: "degen",
@@ -28,6 +35,11 @@ export const CHAINS: Record<ChainSlug, ChainConfig> = {
     explorerUrl: "https://explorer.degen.tips",
     poidhUrl: "https://poidh.xyz/degen",
     description: "Farcaster-native Layer 3 network with viral tip-driven social bounties.",
+    contractAddress: "0x18E5585ca7cE31b90Bc8BB7aAf84152857cE243f",
+    v2Offset: 1197,
+    rpcUrls: [
+      "https://rpc.degen.tips",
+    ],
   },
   arbitrum: {
     slug: "arbitrum",
@@ -42,6 +54,13 @@ export const CHAINS: Record<ChainSlug, ChainConfig> = {
     explorerUrl: "https://arbiscan.io",
     poidhUrl: "https://poidh.xyz/arbitrum",
     description: "Leading Ethereum L2 rollup supporting high-throughput onchain bounties.",
+    contractAddress: "0x5555Fa783936C260f77385b4E153B9725feF1719",
+    v2Offset: 180,
+    rpcUrls: [
+      "https://arb1.arbitrum.io/rpc",
+      "https://arbitrum.llamarpc.com",
+      "https://1rpc.io/arb",
+    ],
   },
   mainnet: {
     slug: "mainnet",
@@ -56,6 +75,13 @@ export const CHAINS: Record<ChainSlug, ChainConfig> = {
     explorerUrl: "https://etherscan.io",
     poidhUrl: "https://poidh.xyz/mainnet",
     description: "The decentralized base layer of Ethereum for flagship onchain coordinate actions.",
+    contractAddress: "0xE731dFadBFf20542E10D09D26Fc71445C70d4232",
+    v2Offset: 0,
+    rpcUrls: [
+      "https://eth.llamarpc.com",
+      "https://cloudflare-eth.com",
+      "https://1rpc.io/eth",
+    ],
   },
 };
 
@@ -77,6 +103,9 @@ export function getChainConfig(slug: string): ChainConfig {
       explorerUrl: "https://etherscan.io",
       poidhUrl: `https://poidh.xyz/${slug}`,
       description: `Ecosystem support for ${slug}`,
+      contractAddress: "0x5555Fa783936C260f77385b4E153B9725feF1719",
+      v2Offset: 0,
+      rpcUrls: ["https://mainnet.base.org"],
     }
   );
 }
