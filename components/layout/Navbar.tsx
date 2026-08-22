@@ -69,8 +69,9 @@ export function Navbar({ bounties = [] }: NavbarProps) {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="font-serif text-lg font-bold tracking-tight text-[#141413] leading-none group-hover:text-[#D97757] transition-colors">
-                  POIDH Radar
+                <span className="font-serif text-lg font-bold tracking-tight leading-none transition-colors">
+                  <span className="text-[#E61B1B]">POIDH</span>{" "}
+                  <span className="text-[#141413]">Radar</span>
                 </span>
                 <span className="text-[10px] font-mono text-[#6B6B67] tracking-wider uppercase mt-0.5">
                   Bounty Discovery Engine

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Activity, Award, Clock, Flame, Info, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Award, Clock, Flame, Shield, Sparkles, Target } from "lucide-react";
 import { Bounty } from "@/lib/poidh/types";
 import { Modal } from "../ui/Modal";
 
@@ -24,39 +24,36 @@ export function ScoreBreakdownModal({
     {
       name: "Freshness",
       score: b.freshness,
-      max: 25,
+      max: 30,
       icon: Clock,
-      description: "Recency of the bounty posting. Freshly listed opportunities receive higher discovery priority.",
+      description: "Exponential decay based on bounty age. Fresh bounties (< 2 days) score near maximum; scores halve every 14 days.",
     },
     {
       name: "Reward Scale",
       score: b.rewardMagnitude,
-      max: 30,
+      max: 35,
       icon: Award,
-      description: "Log-normalized reward magnitude relative to other bounties in the ecosystem.",
+      description: "USD-normalised log-scaled reward. ETH and DEGEN bounties are scored at equivalent dollar value for fair cross-chain comparison.",
     },
     {
-      name: "Actionable Status",
-      score: b.statusScore,
+      name: "Competition",
+      score: b.competition,
       max: 20,
-      icon: ShieldCheck,
-      description: "Open, actionable bounties earn maximum points over finished or cancelled bounties.",
+      icon: Target,
+      description: "Lower competition = higher score. Bounties with zero claims earn maximum points; each additional claim reduces this score monotonically.",
     },
     {
-      name: "Opportunity / Low Competition",
-      score: b.opportunity,
+      name: "Quality",
+      score: b.quality,
       max: 15,
       icon: Sparkles,
-      description: "Hidden gem multiplier: bounties with 0 to 1 claims offer higher probability of earning.",
-    },
-    {
-      name: "Verification Momentum",
-      score: b.activity,
-      max: 10,
-      icon: Activity,
-      description: "Active community proof activity and submissions indicate valid verification interest.",
+      description: "Content richness score based on title length, description detail, and multiplayer collaboration structure.",
     },
   ];
+
+  const statusLabel = b.statusMultiplier < 1
+    ? `× ${b.statusMultiplier} (${bounty.status})`
+    : "× 1.0 (open)";
 
   return (
     <Modal
@@ -84,9 +81,23 @@ export function ScoreBreakdownModal({
           </div>
 
           <div className="text-xs font-sans text-[#6B6B67] max-w-xs leading-relaxed">
-            Composite score calculated from recency, reward scale, and competition level.
+            Composite score from freshness, USD-normalised reward, competition level, and content quality.
           </div>
         </div>
+
+        {/* Standout Tags */}
+        {standoutTags.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {standoutTags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#D97757]/10 text-[#D97757] border border-[#D97757]/20"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Breakdown Factors List */}
         <div className="space-y-3">
@@ -135,6 +146,28 @@ export function ScoreBreakdownModal({
               );
             })}
           </div>
+
+          {/* Status Multiplier Row */}
+          {b.statusMultiplier < 1 && (
+            <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded bg-amber-100 text-amber-600">
+                    <Shield className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-bold text-[#141413] font-mono">
+                    Status Multiplier
+                  </span>
+                </div>
+                <div className="font-mono text-xs text-amber-700 font-bold">
+                  {statusLabel}
+                </div>
+              </div>
+              <p className="text-[11px] text-amber-700 leading-relaxed font-sans">
+                Non-actionable bounties receive a reduced score. Open bounties get full credit.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

@@ -100,7 +100,7 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
 
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-5xl font-serif font-bold text-[#141413] tracking-tight">
-              POIDH Radar
+              <span className="text-[#E61B1B]">POIDH</span> Radar
             </h1>
             <p className="text-base sm:text-lg text-[#6B6B67] font-normal max-w-2xl leading-relaxed">
               Find something worth building. Discover, compare, and verify live onchain bounties across Base, Degen, Arbitrum, and Ethereum.

@@ -14,8 +14,8 @@ export function HiddenGems({ bounties }: HiddenGemsProps) {
   const gems = bounties
     .filter((b) => b.status === "open" && b.claimCount <= 1 && b.amountNumber > 0)
     .sort((a, b) => {
-      const oppA = (a.radarBreakdown?.opportunity || 0) + (a.radarBreakdown?.rewardMagnitude || 0);
-      const oppB = (b.radarBreakdown?.opportunity || 0) + (b.radarBreakdown?.rewardMagnitude || 0);
+      const oppA = (a.radarBreakdown?.competition || 0) + (a.radarBreakdown?.rewardMagnitude || 0);
+      const oppB = (b.radarBreakdown?.competition || 0) + (b.radarBreakdown?.rewardMagnitude || 0);
       return oppB - oppA;
     })
     .slice(0, 8);

@@ -233,6 +233,8 @@ export function normalizeBounty(
     createdAt,
     isMultiplayer,
     isVoting,
+    title,
+    description,
   });
 
   return {

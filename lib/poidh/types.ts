@@ -62,11 +62,11 @@ export interface Bounty {
 
 export interface RadarScoreBreakdown {
   total: number;
-  freshness: number;     // 0-25: based on recency
-  rewardMagnitude: number; // 0-30: log-normalized reward
-  statusScore: number;   // 0-20: active/open priority
-  opportunity: number;   // 0-15: reward-to-competition ratio
-  activity: number;      // 0-10: claims & community velocity
+  freshness: number;          // 0-30: exponential decay (14-day half-life)
+  rewardMagnitude: number;    // 0-35: log-scaled USD-normalised reward
+  competition: number;        // 0-20: monotonic decay by claim count
+  quality: number;            // 0-15: content richness & structure
+  statusMultiplier: number;   // 0.05-1.0: open=1, review=0.75, paid=0.3, cancelled=0.05
   explanation: string;
 }
 

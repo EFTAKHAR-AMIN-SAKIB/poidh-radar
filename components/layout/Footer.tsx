@@ -22,7 +22,7 @@ export function Footer() {
                 />
               </div>
               <span className="font-serif font-bold text-base text-[#141413]">
-                POIDH Radar
+                <span className="text-[#E61B1B]">POIDH</span> Radar
               </span>
             </div>
             <p className="text-xs text-[#6B6B67] max-w-md leading-relaxed">

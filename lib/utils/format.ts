@@ -3,10 +3,43 @@ import { BountyStatus } from "../poidh/types";
 export function weiToNumber(wei: string | null | undefined, decimals = 18): number {
   if (!wei) return 0;
   try {
-    const s = wei.trim();
+    let s = wei.trim();
     if (s === "") return 0;
-    if (s.includes(".")) return parseFloat(s);
-    // If integer
+
+    // Handle hex strings: "0x16345785d8a0000" → BigInt → decimal string
+    if (/^-?0x[0-9a-fA-F]+$/i.test(s)) {
+      const neg = s.startsWith("-");
+      const hex = neg ? s.slice(1) : s;
+      const bigVal = BigInt(hex);
+      s = (neg ? "-" : "") + bigVal.toString();
+    }
+
+    // Handle scientific notation: "1e18" → full decimal string
+    if (/[eE]/.test(s) && !s.includes("x")) {
+      const num = Number(s);
+      if (!isFinite(num) || num === 0) return 0;
+      // Convert to full integer string (no scientific notation)
+      s = BigInt(Math.round(num)).toString();
+    }
+
+    // If the string contains a decimal point, it's likely already in human units
+    // (e.g. "1500000000000000000.0" is a malformed wei, but "1.5" is human ETH)
+    // Heuristic: if it has a decimal AND is very large (>= 1e15), treat it as
+    // wei with a trailing .0 artefact → strip the decimal portion
+    if (s.includes(".")) {
+      const num = parseFloat(s);
+      if (!isFinite(num)) return 0;
+      // If the integer part is large enough to be wei, strip fractional part
+      const intPart = s.split(".")[0].replace("-", "");
+      if (intPart.length >= 15) {
+        s = s.split(".")[0]; // treat as integer wei
+      } else {
+        // Small number with decimal → already in human units
+        return num;
+      }
+    }
+
+    // Standard integer wei → human-readable conversion
     const neg = s.startsWith("-");
     const clean = s.replace("-", "");
     if (clean.length <= decimals) {
