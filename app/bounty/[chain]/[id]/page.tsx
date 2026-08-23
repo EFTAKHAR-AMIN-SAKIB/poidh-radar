@@ -87,7 +87,7 @@ export default async function BountyDetailPage({ params }: BountyDetailPageProps
   const rewardInfo = formatReward(bounty.amountWei, bounty.currency, bounty.priceUsd);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-24 lg:pb-8 space-y-6">
       {/* Top Navigation & Breadcrumbs */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Link
@@ -124,7 +124,9 @@ export default async function BountyDetailPage({ params }: BountyDetailPageProps
               {bounty.createdAt && (
                 <>
                   <span>•</span>
-                  <span>Posted {formatRelativeTime(bounty.createdAt)} ({formatDate(bounty.createdAt)})</span>
+                  <span suppressHydrationWarning>
+                    Posted {formatRelativeTime(bounty.createdAt)} ({formatDate(bounty.createdAt)})
+                  </span>
                 </>
               )}
             </div>
@@ -293,7 +295,7 @@ export default async function BountyDetailPage({ params }: BountyDetailPageProps
               {bounty.createdAt && (
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-[#6B6B67]">Listed Date</span>
-                  <span className="text-[#141413]">{formatDate(bounty.createdAt)}</span>
+                  <span suppressHydrationWarning className="text-[#141413]">{formatDate(bounty.createdAt)}</span>
                 </div>
               )}
             </div>
@@ -352,12 +354,34 @@ export default async function BountyDetailPage({ params }: BountyDetailPageProps
               href={bounty.url}
               target="_blank"
               rel="noreferrer"
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-md bg-[#D97757] hover:bg-[#CC785C] text-white font-mono text-xs font-medium transition-colors shadow-sm"
+              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-md bg-[#D97757] hover:bg-[#CC785C] text-white font-mono text-xs font-medium transition-colors shadow-sm active:scale-95"
             >
               <span>Open on POIDH ↗</span>
             </a>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Floating Sticky Bottom CTA Bar (< lg) */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-[#FAF9F5]/95 backdrop-blur-md border-t border-[#E5E4DF] z-30 lg:hidden flex items-center justify-between gap-3 shadow-lg">
+        <div className="min-w-0">
+          <span className="text-[10px] font-mono uppercase text-[#8E8E8A] block">
+            Bounty Reward
+          </span>
+          <div className="font-mono text-sm font-bold text-[#141413] truncate">
+            {rewardInfo.fullWithSymbol}
+          </div>
+        </div>
+
+        <a
+          href={bounty.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#D97757] hover:bg-[#CC785C] active:scale-95 text-white font-mono text-xs font-bold transition-all shadow-sm flex-shrink-0"
+        >
+          <span>Claim on POIDH</span>
+          <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       </div>
     </div>
   );

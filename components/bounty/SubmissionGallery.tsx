@@ -50,6 +50,28 @@ export function SubmissionGallery({ bounty, claims, chainSlug }: SubmissionGalle
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedIndex, claims.length]);
 
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+
+    // Minimum swipe threshold 50px
+    if (diff > 50) {
+      // Swiped left -> Next
+      setSelectedIndex((prev) => (prev !== null && prev < claims.length - 1 ? prev + 1 : 0));
+    } else if (diff < -50) {
+      // Swiped right -> Prev
+      setSelectedIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : claims.length - 1));
+    }
+    setTouchStart(null);
+  };
+
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : claims.length - 1));
@@ -204,9 +226,13 @@ export function SubmissionGallery({ bounty, claims, chainSlug }: SubmissionGalle
           }
         >
           <div className="space-y-6">
-            {/* High-Resolution Photo Container */}
+            {/* High-Resolution Photo Container with Swipe Support */}
             {activeClaim.image ? (
-              <div className="relative w-full max-h-[60vh] bg-[#F0EEE6] rounded-xl border border-[#E5E4DF] overflow-hidden flex items-center justify-center p-2 group">
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative w-full max-h-[60vh] bg-[#F0EEE6] rounded-xl border border-[#E5E4DF] overflow-hidden flex items-center justify-center p-2 group select-none touch-pan-y"
+              >
                 <img
                   src={activeClaim.image}
                   alt={activeClaim.title}
@@ -337,7 +363,7 @@ export function SubmissionGallery({ bounty, claims, chainSlug }: SubmissionGalle
                 <span className="text-[10px] uppercase tracking-wider text-[#8E8E8A] block">
                   Submitted
                 </span>
-                <span className="text-[#141413]">
+                <span suppressHydrationWarning className="text-[#141413]">
                   {activeClaim.createdAt ? formatRelativeTime(activeClaim.createdAt) : "Verified onchain"}
                 </span>
               </div>

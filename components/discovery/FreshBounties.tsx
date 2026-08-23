@@ -55,24 +55,24 @@ export function FreshBounties({ bounties }: FreshBountiesProps) {
               <Link
                 key={bounty.key}
                 href={`/bounty/${bounty.chain}/${bounty.id}`}
-                className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-[#E5E4DF] bg-[#FFFFFF] shadow-paper hover:border-[#D1D0C9] hover:shadow-paper-md transition-all gap-4"
+                className="group flex flex-col sm:flex-row sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-[#E5E4DF] bg-[#FFFFFF] shadow-paper hover:border-[#D1D0C9] hover:shadow-paper-md active:scale-[0.99] transition-all gap-3 sm:gap-4"
               >
-                {/* Left: Chain, Status, Title, Description */}
-                <div className="flex items-start gap-4">
-                  <div className="hidden sm:flex flex-col items-center justify-center w-10 text-center p-1.5 rounded bg-[#F0EEE6] border border-[#E5E4DF]">
-                    <span className="text-[9px] font-mono uppercase text-[#6B6B67]">
+                {/* Left: Drop Tag, Chain, Status, Title, Description */}
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+                  <div className="flex flex-col items-center justify-center w-8 sm:w-10 text-center p-1 sm:p-1.5 rounded bg-[#F0EEE6] border border-[#E5E4DF] flex-shrink-0">
+                    <span className="text-[8px] sm:text-[9px] font-mono uppercase text-[#6B6B67]">
                       DROP
                     </span>
-                    <span className="text-xs font-mono font-bold text-[#141413]">
+                    <span className="text-[11px] sm:text-xs font-mono font-bold text-[#141413]">
                       #{idx + 1}
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <ChainBadge chain={bounty.chain} size="sm" />
                       <StatusBadge status={bounty.status} size="sm" />
-                      <span className="text-xs font-mono text-[#8E8E8A]">
+                      <span suppressHydrationWarning className="text-[11px] sm:text-xs font-mono text-[#8E8E8A]">
                         {formatRelativeTime(bounty.createdAt)}
                       </span>
                     </div>
@@ -90,7 +90,7 @@ export function FreshBounties({ bounties }: FreshBountiesProps) {
                 </div>
 
                 {/* Right: Reward & Score */}
-                <div className="flex items-center justify-between sm:justify-end gap-4 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-[#E5E4DF]">
+                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-[#E5E4DF]">
                   <div>
                     <div className="text-[10px] font-mono uppercase text-[#8E8E8A]">
                       Reward
@@ -98,13 +98,18 @@ export function FreshBounties({ bounties }: FreshBountiesProps) {
                     <div className="font-mono text-sm font-bold text-[#141413] whitespace-nowrap">
                       {rewardInfo.fullWithSymbol}
                     </div>
+                    {rewardInfo.usdEstimate && (
+                      <div className="text-[10px] font-mono text-[#6B6B67] sm:hidden">
+                        {rewardInfo.usdEstimate}
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className="text-xs font-mono px-2 py-0.5 rounded bg-[#F0EEE6] text-[#141413] border border-[#E5E4DF] font-bold whitespace-nowrap">
+                    <div className="text-xs font-mono px-2 py-0.5 rounded bg-[#F0EEE6] text-[#141413] border border-[#E5E4DF] font-bold whitespace-nowrap shadow-2xs">
                       🔥 {bounty.radarScore}
                     </div>
-                    <div className="p-1.5 rounded bg-[#FAF9F5] border border-[#E5E4DF] text-[#6B6B67] group-hover:text-[#D97757] group-hover:border-[#D97757] transition-colors">
+                    <div className="p-1.5 rounded bg-[#FAF9F5] border border-[#E5E4DF] text-[#6B6B67] group-hover:text-[#D97757] group-hover:border-[#D97757] active:translate-x-0.5 transition-all">
                       <ArrowRight className="w-4 h-4" />
                     </div>
                   </div>

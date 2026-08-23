@@ -102,8 +102,8 @@ export function Navbar({ bounties = [] }: NavbarProps) {
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-2.5">
-            {/* Quick Search trigger */}
+          <div className="flex items-center gap-2">
+            {/* Quick Search trigger (Desktop & Tablet) */}
             <Link
               href="/bounties"
               className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] hover:text-[#141413] hover:border-[#D1D0C9] transition-colors"
@@ -115,10 +115,19 @@ export function Navbar({ bounties = [] }: NavbarProps) {
               </kbd>
             </Link>
 
+            {/* Direct Search Icon for Mobile (< sm) */}
+            <Link
+              href="/bounties"
+              className="sm:hidden p-2 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] hover:text-[#141413] active:scale-95 transition-all"
+              aria-label="Search all bounties"
+            >
+              <Search className="w-4 h-4 text-[#D97757]" />
+            </Link>
+
             {/* Surprise Me button */}
             <button
               onClick={() => setShowSurpriseModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 active:scale-95 transition-all"
             >
               <Dices className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Surprise Me</span>
@@ -144,7 +153,7 @@ export function Navbar({ bounties = [] }: NavbarProps) {
             {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#141413]"
+              className="md:hidden p-2 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#141413] active:scale-95 transition-all"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -154,17 +163,17 @@ export function Navbar({ bounties = [] }: NavbarProps) {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-[#E5E4DF] bg-[#FAF9F5] px-4 py-4 space-y-3 animate-in slide-in-from-top duration-150">
+          <div className="md:hidden border-t border-[#E5E4DF] bg-[#FAF9F5] px-4 py-4 space-y-3 animate-in slide-in-from-top duration-150 shadow-paper-lg">
             <Link
               href="/bounties"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs font-mono rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67]"
+              className="flex items-center gap-2 px-3 py-2.5 text-xs font-mono rounded-lg border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] active:bg-[#EAE7DD]"
             >
               <Search className="w-4 h-4 text-[#D97757]" />
               <span>Search all bounties…</span>
             </Link>
 
-            <div className="space-y-1 pt-2">
+            <div className="space-y-1 pt-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -173,13 +182,38 @@ export function Navbar({ bounties = [] }: NavbarProps) {
                   className={cn(
                     "block px-3 py-2 text-sm font-mono rounded-md transition-colors",
                     pathname === link.href
-                      ? "bg-[#F0EEE6] text-[#141413] font-bold"
+                      ? "bg-[#F0EEE6] text-[#141413] font-bold border border-[#E5E4DF]"
                       : "text-[#6B6B67] hover:bg-[#F0EEE6]/60"
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
+            </div>
+
+            {/* Quick Network Shortcuts in Mobile Menu */}
+            <div className="pt-2 border-t border-[#E5E4DF] space-y-1.5">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-[#8E8E8A]">
+                Quick Network Filter
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { slug: "base", name: "Base" },
+                  { slug: "arbitrum", name: "Arbitrum" },
+                  { slug: "degen", name: "Degen" },
+                  { slug: "mainnet", name: "Ethereum" },
+                ].map((c) => (
+                  <Link
+                    key={c.slug}
+                    href={`/bounties?chain=${c.slug}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-[#E5E4DF] bg-[#FFFFFF] text-xs font-mono text-[#141413] hover:border-[#D97757] active:bg-[#F0EEE6]"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D97757]" />
+                    <span>{c.name}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
 
             <div className="pt-2 border-t border-[#E5E4DF] flex items-center justify-between text-xs font-mono text-[#6B6B67]">

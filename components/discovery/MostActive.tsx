@@ -46,8 +46,8 @@ export function MostActive({ bounties }: MostActiveProps) {
           </Link>
         </div>
 
-        {/* Bounties Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Bounties Grid - 2 columns on mobile for better density */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
           {activeList.map((bounty) => (
             <BountyCard key={bounty.key} bounty={bounty} />
           ))}

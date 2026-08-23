@@ -19,6 +19,20 @@ interface BountyCardProps {
 }
 
 /**
+ * Clean raw markdown headings, links, and formatting from bounty descriptions
+ * for compact card preview text.
+ */
+function cleanDescription(desc: string | null | undefined): string {
+  if (!desc) return "";
+  return desc
+    .replace(/^#+\s+.*$/gm, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[*_~`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
  * Premium interactive empty state for bounties without submitted proof images
  */
 function EmptyThumbnailState({ bounty }: { bounty: Bounty }) {
@@ -84,29 +98,29 @@ function EmptyThumbnailState({ bounty }: { bounty: Bounty }) {
         )}
 
         {/* Dynamic Headline */}
-        <h4 className="font-serif font-bold text-[#141413] text-sm sm:text-[15px] leading-tight group-hover:text-[#D97757] transition-colors">
+        <h4 className="font-serif font-bold text-[#141413] text-xs sm:text-[15px] leading-tight group-hover:text-[#D97757] transition-colors">
           {isZeroClaims ? "Be the First to Claim" : "Proof in Progress"}
         </h4>
 
         {/* Supporting Explanation */}
-        <p className="text-[11px] text-[#6B6B67] leading-snug font-sans max-w-[210px] line-clamp-2">
+        <p className="hidden sm:block text-[11px] text-[#6B6B67] leading-snug font-sans max-w-[210px] line-clamp-2">
           {isZeroClaims
             ? "No submission yet — your proof could be the first."
             : "Claims have been submitted. See what others are working on."}
         </p>
 
         {/* Interactive CTA Pill */}
-        <div className="pt-1">
+        <div className="pt-0.5 sm:pt-1">
           <span
             className={cn(
-              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#FFFFFF] border font-mono text-[10px] font-bold shadow-2xs transition-all duration-200",
+              "inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-md bg-[#FFFFFF] border font-mono text-[9px] sm:text-[10px] font-bold shadow-2xs transition-all duration-200",
               isZeroClaims
                 ? "border-[#E5E4DF] text-[#141413] group-hover:border-[#D97757] group-hover:bg-[#FAF9F5] group-hover:text-[#D97757]"
                 : "border-[#E5E4DF] text-[#141413] group-hover:border-[#2563EB] group-hover:bg-[#FAF9F5] group-hover:text-[#2563EB]"
             )}
           >
-            <span>{isZeroClaims ? "View Bounty" : "View Claims"}</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+            <span>{isZeroClaims ? "View" : "Claims"}</span>
+            <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>
       </div>
@@ -166,66 +180,71 @@ export function BountyCard({ bounty, featured = false, className }: BountyCardPr
           className
         )}
       >
-        {/* Clickable Card Link Anchor */}
-        <Link
-          href={`/bounty/${bounty.chain}/${bounty.id}`}
-          className="block relative aspect-[16/10] w-full bg-[#F0EEE6] border-b border-[#E5E4DF] overflow-hidden select-none"
-        >
-          {hasValidProofImage ? (
-            <>
-              {/* Loading Skeleton */}
-              {!imgLoaded && (
-                <div className="absolute inset-0 w-full h-full bg-[#F0EEE6] animate-pulse flex items-center justify-center">
-                  <span className="w-5 h-5 border-2 border-[#D97757]/30 border-t-[#D97757] rounded-full animate-spin" />
-                </div>
-              )}
-              <img
-                src={imgSrc!}
-                alt={bounty.title}
-                onLoad={() => {
-                  if (imgTimeoutRef.current) clearTimeout(imgTimeoutRef.current);
-                  setImgLoaded(true);
-                }}
-                onError={handleImgError}
-                className={cn(
-                  "w-full h-full object-cover group-hover:scale-105 transition-all duration-300",
-                  imgLoaded ? "opacity-100" : "opacity-0"
+        {/* Top Thumbnail Section with Unnested Score Badge */}
+        <div className="relative aspect-[16/10] w-full bg-[#F0EEE6] border-b border-[#E5E4DF] overflow-hidden select-none">
+          <Link
+            href={`/bounty/${bounty.chain}/${bounty.id}`}
+            className="block w-full h-full"
+            aria-label={`View bounty: ${bounty.title}`}
+          >
+            {hasValidProofImage ? (
+              <>
+                {/* Loading Skeleton */}
+                {!imgLoaded && (
+                  <div className="absolute inset-0 w-full h-full bg-[#F0EEE6] animate-pulse flex items-center justify-center">
+                    <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-[#D97757]/30 border-t-[#D97757] rounded-full animate-spin" />
+                  </div>
                 )}
-                loading="lazy"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              />
-            </>
-          ) : (
-            /* Premium Interactive Discovery Empty State */
-            <EmptyThumbnailState bounty={bounty} />
-          )}
+                <img
+                  src={imgSrc!}
+                  alt={bounty.title}
+                  onLoad={() => {
+                    if (imgTimeoutRef.current) clearTimeout(imgTimeoutRef.current);
+                    setImgLoaded(true);
+                  }}
+                  onError={handleImgError}
+                  className={cn(
+                    "w-full h-full object-cover group-hover:scale-105 transition-all duration-300",
+                    imgLoaded ? "opacity-100" : "opacity-0"
+                  )}
+                  loading="lazy"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+              </>
+            ) : (
+              /* Premium Interactive Discovery Empty State */
+              <EmptyThumbnailState bounty={bounty} />
+            )}
+          </Link>
 
           {/* Radar Score Badge (Top-Right) */}
           <button
+            type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setShowScoreModal(true);
             }}
             title="Click to view Radar Score breakdown"
-            className="absolute top-2.5 right-2.5 flex items-center gap-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded-md border border-[#E5E4DF] bg-[#FAF9F5]/95 text-[#141413] shadow-sm hover:border-[#D97757] hover:text-[#D97757] transition-colors z-20"
+            aria-label={`Radar score: ${bounty.radarScore} out of 100. Click to view breakdown`}
+            className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-md border border-[#E5E4DF] bg-[#FAF9F5]/95 backdrop-blur-sm text-[#141413] shadow-sm hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all z-20 cursor-pointer touch-manipulation"
           >
-            <Flame className="w-3 h-3 text-[#D97757] fill-[#D97757]" />
+            <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D97757] fill-[#D97757]" />
             <span>{bounty.radarScore}</span>
           </button>
-        </Link>
+        </div>
 
         {/* Card Body */}
-        <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-          <div className="space-y-2">
+        <div className="p-2.5 sm:p-4 flex-1 flex flex-col justify-between space-y-2 sm:space-y-3">
+          <div className="space-y-1.5 sm:space-y-2">
             {/* Badges Row */}
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center justify-between gap-1 sm:gap-2 flex-wrap">
+              <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
                 <ChainBadge chain={bounty.chain} size="sm" />
                 <StatusBadge status={bounty.status} size="sm" />
 
                 {bounty.isMultiplayer && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#6B6B67] bg-[#F0EEE6] border border-[#E5E4DF] px-1.5 py-0.5 rounded">
+                  <span className="inline-flex items-center gap-0.5 text-[9px] sm:text-[10px] font-mono text-[#6B6B67] bg-[#F0EEE6] border border-[#E5E4DF] px-1 py-0.5 rounded">
                     <Users className="w-2.5 h-2.5" /> MP
                   </span>
                 )}
@@ -237,51 +256,51 @@ export function BountyCard({ bounty, featured = false, className }: BountyCardPr
               href={`/bounty/${bounty.chain}/${bounty.id}`}
               className="block group-hover:text-[#D97757] transition-colors"
             >
-              <h3 className="font-bold text-[#141413] text-base leading-snug line-clamp-2">
+              <h3 className="font-bold text-[#141413] text-xs sm:text-base leading-snug line-clamp-2">
                 {bounty.title}
               </h3>
             </Link>
 
-            {/* Description */}
-            {bounty.description && (
-              <p className="text-xs text-[#6B6B67] line-clamp-2 leading-relaxed font-sans">
-                {bounty.description}
+            {/* Description (Visible on larger screens with clean 2-line clamp) */}
+            {bounty.description && cleanDescription(bounty.description) && (
+              <p className="hidden sm:block text-xs text-[#6B6B67] line-clamp-2 leading-relaxed font-sans overflow-hidden">
+                {cleanDescription(bounty.description)}
               </p>
             )}
           </div>
 
           {/* Reward & Submissions Row */}
-          <div className="pt-3 border-t border-[#E5E4DF] flex items-center justify-between gap-2">
+          <div className="pt-2 sm:pt-3 border-t border-[#E5E4DF] flex items-center justify-between gap-1 sm:gap-2">
             {/* Reward Box */}
-            <div className="px-2.5 py-1 rounded bg-[#F0EEE6] border border-[#E5E4DF] font-mono">
-              <div className="text-[#141413] font-bold text-xs sm:text-sm">
+            <div className="p-1 sm:px-2.5 sm:py-1 rounded bg-[#F0EEE6] border border-[#E5E4DF] font-mono min-w-0">
+              <div className="text-[#141413] font-bold text-[11px] sm:text-sm truncate">
                 {displayReward}
               </div>
               {rewardInfo.usdEstimate && (
-                <div className="text-[10px] text-[#6B6B67]">
+                <div className="text-[9px] sm:text-[10px] text-[#6B6B67] truncate">
                   {rewardInfo.usdEstimate}
                 </div>
               )}
             </div>
 
             {/* Submissions text */}
-            <div className="text-right text-xs font-mono text-[#6B6B67]">
+            <div className="text-right text-[10px] sm:text-xs font-mono text-[#6B6B67] flex-shrink-0">
               {bounty.claimCount}{" "}
               {bounty.claimCount === 1 ? "claim" : "claims"}
             </div>
           </div>
 
           {/* Bottom Action: View Bounty → */}
-          <div className="pt-1 flex items-center justify-between">
-            <span className="text-[11px] font-mono text-[#8E8E8A]">
+          <div className="pt-0.5 sm:pt-1 flex items-center justify-between">
+            <span suppressHydrationWarning className="text-[10px] sm:text-[11px] font-mono text-[#8E8E8A]">
               {formatRelativeTime(bounty.createdAt)}
             </span>
             <Link
               href={`/bounty/${bounty.chain}/${bounty.id}`}
-              className="inline-flex items-center gap-1 text-xs font-mono font-medium text-[#D97757] group-hover:text-[#CC785C] group-hover:translate-x-0.5 transition-all"
+              className="inline-flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-mono font-medium text-[#D97757] group-hover:text-[#CC785C] group-hover:translate-x-0.5 transition-all"
             >
-              <span>View Bounty</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>View</span>
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </Link>
           </div>
         </div>

@@ -19,6 +19,10 @@ export function BountyTable({ bounties }: BountyTableProps) {
 
   return (
     <>
+      <div className="sm:hidden flex items-center justify-between text-[11px] font-mono text-[#8E8E8A] px-1 pb-1">
+        <span>Table Directory</span>
+        <span>Swipe horizontally to view all columns →</span>
+      </div>
       <div className="w-full overflow-x-auto rounded-xl border border-[#E5E4DF] bg-[#FFFFFF] shadow-paper">
         <table className="w-full text-left text-xs font-mono border-collapse min-w-[760px]">
           <thead>
@@ -103,7 +107,7 @@ export function BountyTable({ bounties }: BountyTableProps) {
                   </td>
 
                   {/* Age */}
-                  <td className="py-3.5 px-4 whitespace-nowrap text-[#8E8E8A]">
+                  <td suppressHydrationWarning className="py-3.5 px-4 whitespace-nowrap text-[#8E8E8A]">
                     {formatRelativeTime(b.createdAt)}
                   </td>
 

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { getAllBounties } from "@/lib/poidh/client";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { Navbar } from "@/components/layout/Navbar";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,8 +49,10 @@ export default async function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className="min-h-screen flex flex-col bg-[#FAF9F5] text-[#141413] antialiased">
         <Navbar bounties={bounties} />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pb-16 md:pb-0">{children}</main>
         <Footer />
+        <MobileBottomNav bounties={bounties} />
+        <ScrollToTop />
       </body>
     </html>
   );

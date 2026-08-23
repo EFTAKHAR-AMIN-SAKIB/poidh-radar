@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -108,37 +109,53 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* 4 Stat Metric Pills in Calm Paper Ivory & Sand */}
+        {/* 4 Stat Metric Pills as Interactive Filter Shortcuts */}
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
           {/* Pill 1: Active Bounties */}
-          <div className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] border border-[#E5E4DF] text-xs font-mono flex items-center gap-1.5 text-[#141413]">
+          <Link
+            href="/bounties?status=open"
+            className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] hover:bg-[#EAE7DD] border border-[#E5E4DF] hover:border-[#D97757]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413] active:scale-95 transition-all shadow-2xs"
+            title="Filter by open bounties"
+          >
             <span className="font-bold text-[#D97757]">{activeCount.toLocaleString()}</span>
             <span className="text-[#6B6B67]">active bounties</span>
-          </div>
+          </Link>
 
           {/* Pill 2: Total Indexed */}
-          <div className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] border border-[#E5E4DF] text-xs font-mono flex items-center gap-1.5 text-[#141413]">
+          <Link
+            href="/bounties"
+            className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] hover:bg-[#EAE7DD] border border-[#E5E4DF] hover:border-[#D97757]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413] active:scale-95 transition-all shadow-2xs"
+            title="Explore all indexed bounties"
+          >
             <span className="font-bold">{totalBountiesCount.toLocaleString()}</span>
             <span className="text-[#6B6B67]">total indexed</span>
-          </div>
+          </Link>
 
           {/* Pill 3: Estimated Rewards Volume */}
-          <div className="px-3.5 py-1.5 rounded-md bg-[#EBDBBC]/40 border border-[#D4A27F]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413]">
+          <Link
+            href="/bounties?sort=reward-desc"
+            className="px-3.5 py-1.5 rounded-md bg-[#EBDBBC]/40 hover:bg-[#EBDBBC]/60 border border-[#D4A27F]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413] active:scale-95 transition-all shadow-2xs"
+            title="View highest reward bounties"
+          >
             <span className="font-bold text-[#141413]">{estUsd}</span>
             <span className="text-[#6B6B67]">reward pool</span>
-          </div>
+          </Link>
 
           {/* Pill 4: 4 Connected Networks */}
-          <div className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] border border-[#E5E4DF] text-xs font-mono flex items-center gap-1.5 text-[#141413]">
+          <Link
+            href="/chains"
+            className="px-3.5 py-1.5 rounded-md bg-[#F0EEE6] hover:bg-[#EAE7DD] border border-[#E5E4DF] hover:border-[#D97757]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413] active:scale-95 transition-all shadow-2xs"
+            title="View indexed networks"
+          >
             <span className="font-bold">4</span>
             <span className="text-[#6B6B67]">networks</span>
-          </div>
+          </Link>
         </div>
 
         {/* Editorial Search & Filter Bar */}
         <form
           onSubmit={handleSearch}
-          className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 pt-2"
+          className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-2.5 pt-2"
         >
           {/* Search Input Box */}
           <div className="sm:col-span-7 md:col-span-8 relative">
@@ -147,7 +164,7 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search bounties, ideas, issuers, or keywords…"
-              className="w-full pl-10 pr-10 py-3 rounded-lg border border-[#E5E4DF] bg-[#FFFFFF] text-sm text-[#141413] placeholder-[#8E8E8A] font-sans focus:outline-none focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/30 shadow-paper transition-all"
+              className="w-full pl-10 pr-12 py-3 rounded-lg border border-[#E5E4DF] bg-[#FFFFFF] text-sm text-[#141413] placeholder-[#8E8E8A] font-sans focus:outline-none focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/20 shadow-paper transition-all"
             />
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E8A]">
               <Search className="w-4 h-4" />
@@ -155,9 +172,9 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
             <button
               type="submit"
               aria-label="Search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded bg-[#D97757] text-white hover:bg-[#CC785C] transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md bg-[#D97757] text-white hover:bg-[#CC785C] active:scale-95 transition-all"
             >
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 

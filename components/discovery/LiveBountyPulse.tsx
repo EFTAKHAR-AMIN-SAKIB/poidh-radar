@@ -108,9 +108,9 @@ export function LiveBountyPulse({ stats }: LiveBountyPulseProps) {
         </div>
 
         {/* Chain breakdown bar with Official Chain Vector Logos */}
-        <div className="p-3 rounded-xl border border-[#E5E4DF] bg-[#F0EEE6] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <span className="text-[#6B6B67] font-medium">Network Distribution:</span>
-          <div className="flex flex-wrap items-center gap-2.5">
+        <div className="p-3 rounded-xl border border-[#E5E4DF] bg-[#F0EEE6] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs font-mono">
+          <span className="text-[#6B6B67] font-medium flex-shrink-0">Network Distribution:</span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 touch-pan-x">
             {(["base", "degen", "arbitrum", "mainnet"] as const).map((chain) => {
               const cfg = CHAINS[chain];
               const count = stats.chainCounts[chain] || 0;
@@ -119,7 +119,7 @@ export function LiveBountyPulse({ stats }: LiveBountyPulseProps) {
                 <Link
                   key={chain}
                   href={`/bounties?chain=${chain}`}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#E5E4DF] bg-[#FFFFFF] hover:border-[#D97757] hover:shadow-sm transition-all text-[#141413]"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-[#E5E4DF] bg-[#FFFFFF] hover:border-[#D97757] hover:shadow-sm active:scale-95 transition-all text-[#141413] flex-shrink-0 shadow-2xs"
                 >
                   <ChainIcon chain={chain} size="sm" />
                   <span className="font-semibold">{cfg.name}:</span>

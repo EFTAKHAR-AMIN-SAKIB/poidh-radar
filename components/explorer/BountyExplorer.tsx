@@ -270,8 +270,16 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
 
         {/* Mobile Filter Drawer / Bottom Sheet */}
         {mobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-[#141413]/40 backdrop-blur-sm">
-            <div className="bg-[#FAF9F5] rounded-t-xl border-t border-[#E5E4DF] p-6 max-h-[85vh] overflow-y-auto">
+          <div
+            className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end bg-[#141413]/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setMobileDrawerOpen(false)}
+          >
+            <div
+              className="bg-[#FAF9F5] rounded-t-2xl border-t border-[#E5E4DF] p-6 max-h-[85vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-250"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Sheet Drag Indicator */}
+              <div className="w-12 h-1.5 rounded-full bg-[#D1D0C9] mx-auto mb-4" />
               <FilterRail
                 filters={filters}
                 onChange={updateFilters}
@@ -286,51 +294,145 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
         )}
 
         {/* Results Column */}
-        <div className="lg:col-span-3 space-y-5">
+        <div className="lg:col-span-3 space-y-4">
           {/* Active Search & Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[#E5E4DF] bg-[#FFFFFF] shadow-paper">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8E8E8A]" />
-              <input
-                type="text"
-                value={filters.q}
-                onChange={(e) => updateFilters({ ...filters, q: e.target.value })}
-                placeholder="Filter results by keyword or address…"
-                className="w-full pl-9 pr-7 py-1.5 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-xs font-mono text-[#141413] placeholder-[#8E8E8A] focus:outline-none focus:border-[#D97757] focus:bg-[#FFFFFF]"
-              />
-              {filters.q && (
-                <button
-                  onClick={() => updateFilters({ ...filters, q: "" })}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6B6B67] hover:text-[#141413]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-[#E5E4DF] bg-[#FFFFFF] shadow-paper">
+              {/* Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#8E8E8A]" />
+                <input
+                  type="text"
+                  value={filters.q}
+                  onChange={(e) => updateFilters({ ...filters, q: e.target.value })}
+                  placeholder="Filter results by keyword or address…"
+                  className="w-full pl-9 pr-7 py-2 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-xs font-mono text-[#141413] placeholder-[#8E8E8A] focus:outline-none focus:border-[#D97757] focus:bg-[#FFFFFF]"
+                />
+                {filters.q && (
+                  <button
+                    onClick={() => updateFilters({ ...filters, q: "" })}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#6B6B67] hover:text-[#141413]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Results Count & Quick Reset */}
+              <div className="flex items-center justify-between sm:justify-end gap-3 text-xs font-mono">
+                <span className="text-[#6B6B67]">
+                  <strong className="text-[#141413] font-bold">
+                    {filteredBounties.length}
+                  </strong>{" "}
+                  {filteredBounties.length === 1 ? "bounty" : "bounties"}
+                </span>
+
+                {(filters.chains.length < CHAIN_ORDER.length ||
+                  filters.statuses.length > 0 ||
+                  filters.q ||
+                  filters.gemsOnly ||
+                  filters.withProofOnly ||
+                  filters.multiplayerOnly) && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-[#D97757] hover:underline flex items-center gap-1 font-medium active:scale-95 transition-all"
+                  >
+                    <span>Clear All</span>
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Results Count & Quick Reset */}
-            <div className="flex items-center justify-between sm:justify-end gap-3 text-xs font-mono">
-              <span className="text-[#6B6B67]">
-                <strong className="text-[#141413] font-bold">
-                  {filteredBounties.length}
-                </strong>{" "}
-                {filteredBounties.length === 1 ? "bounty" : "bounties"}
-              </span>
+            {/* Active Filter Chips Strip (Mobile & Desktop) */}
+            {(filters.chains.length < CHAIN_ORDER.length ||
+              filters.statuses.length > 0 ||
+              filters.gemsOnly ||
+              filters.withProofOnly ||
+              filters.multiplayerOnly ||
+              filters.q.trim()) && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-mono uppercase text-[#8E8E8A] mr-1">
+                  Active:
+                </span>
 
-              {(filters.chains.length < CHAIN_ORDER.length ||
-                filters.statuses.length > 0 ||
-                filters.q ||
-                filters.gemsOnly ||
-                filters.withProofOnly) && (
-                <button
-                  onClick={resetFilters}
-                  className="text-[#D97757] hover:underline flex items-center gap-1 font-medium"
-                >
-                  <span>Clear Filters</span>
-                </button>
-              )}
-            </div>
+                {/* Chain chips */}
+                {filters.chains.length < CHAIN_ORDER.length &&
+                  filters.chains.map((chain) => (
+                    <button
+                      key={chain}
+                      onClick={() => {
+                        const next = filters.chains.filter((c) => c !== chain);
+                        updateFilters({
+                          ...filters,
+                          chains: next.length === 0 ? [...CHAIN_ORDER] : next,
+                        });
+                      }}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E5E4DF] bg-[#F0EEE6] hover:bg-[#EAE7DD] text-[#141413] text-[11px] font-mono capitalize transition-colors shadow-2xs"
+                    >
+                      <span>{chain}</span>
+                      <X className="w-3 h-3 text-[#6B6B67]" />
+                    </button>
+                  ))}
+
+                {/* Status chips */}
+                {filters.statuses.map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      updateFilters({
+                        ...filters,
+                        statuses: filters.statuses.filter((s) => s !== status),
+                      });
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E5E4DF] bg-[#F0EEE6] hover:bg-[#EAE7DD] text-[#141413] text-[11px] font-mono uppercase transition-colors shadow-2xs"
+                  >
+                    <span>{status}</span>
+                    <X className="w-3 h-3 text-[#6B6B67]" />
+                  </button>
+                ))}
+
+                {/* Feature Toggle chips */}
+                {filters.gemsOnly && (
+                  <button
+                    onClick={() => updateFilters({ ...filters, gemsOnly: false })}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] text-[11px] font-mono font-medium transition-colors shadow-2xs"
+                  >
+                    <span>Gems Only</span>
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+
+                {filters.withProofOnly && (
+                  <button
+                    onClick={() => updateFilters({ ...filters, withProofOnly: false })}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E5E4DF] bg-[#F0EEE6] hover:bg-[#EAE7DD] text-[#141413] text-[11px] font-mono transition-colors shadow-2xs"
+                  >
+                    <span>Has Proof</span>
+                    <X className="w-3 h-3 text-[#6B6B67]" />
+                  </button>
+                )}
+
+                {filters.multiplayerOnly && (
+                  <button
+                    onClick={() => updateFilters({ ...filters, multiplayerOnly: false })}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E5E4DF] bg-[#F0EEE6] hover:bg-[#EAE7DD] text-[#141413] text-[11px] font-mono transition-colors shadow-2xs"
+                  >
+                    <span>Multiplayer</span>
+                    <X className="w-3 h-3 text-[#6B6B67]" />
+                  </button>
+                )}
+
+                {filters.q.trim() && (
+                  <button
+                    onClick={() => updateFilters({ ...filters, q: "" })}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#E5E4DF] bg-[#F0EEE6] hover:bg-[#EAE7DD] text-[#141413] text-[11px] font-mono transition-colors shadow-2xs"
+                  >
+                    <span>&quot;{filters.q}&quot;</span>
+                    <X className="w-3 h-3 text-[#6B6B67]" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Bounty Content or Empty State */}
@@ -355,7 +457,7 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
               </button>
             </div>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-5">
               {paginatedBounties.map((bounty) => (
                 <BountyCard key={bounty.key} bounty={bounty} />
               ))}

@@ -117,7 +117,7 @@ export function SurpriseMeModal({
               </div>
               <div className="col-span-2 sm:col-span-1">
                 <span className="text-[#8E8E8A] text-[10px] block uppercase">Listed</span>
-                <span className="text-[#141413] font-medium">
+                <span suppressHydrationWarning className="text-[#141413] font-medium">
                   {formatRelativeTime(selectedBounty.createdAt)}
                 </span>
               </div>

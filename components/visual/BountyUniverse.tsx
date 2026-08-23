@@ -605,28 +605,30 @@ export function BountyUniverse({ bounties }: BountyUniverseProps) {
               </button>
             );
           })}
-
-          <div className="hidden sm:flex items-center gap-1 border-l border-[#E5E4DF] pl-2 ml-1">
+          <div className="flex items-center gap-1 border-l border-[#E5E4DF] pl-2 ml-1">
             <button
               onClick={() => setZoom((z) => Math.min(1.8, z + 0.2))}
-              className="p-1 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] rounded transition-colors"
+              className="p-1.5 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] active:scale-95 rounded transition-colors"
               title="Zoom in"
+              aria-label="Zoom in on galaxy"
             >
-              <ZoomIn className="w-3.5 h-3.5" />
+              <ZoomIn className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
             <button
               onClick={() => setZoom((z) => Math.max(0.6, z - 0.2))}
-              className="p-1 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] rounded transition-colors"
+              className="p-1.5 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] active:scale-95 rounded transition-colors"
               title="Zoom out"
+              aria-label="Zoom out on galaxy"
             >
-              <ZoomOut className="w-3.5 h-3.5" />
+              <ZoomOut className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
             <button
               onClick={() => setZoom(1)}
-              className="p-1 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] rounded transition-colors"
+              className="p-1.5 text-[#6B6B67] hover:text-[#141413] hover:bg-[#F0EEE6] active:scale-95 rounded transition-colors"
               title="Reset view"
+              aria-label="Reset galaxy zoom"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
             </button>
           </div>
         </div>
@@ -635,7 +637,7 @@ export function BountyUniverse({ bounties }: BountyUniverseProps) {
       {/* Canvas Area */}
       <div
         ref={containerRef}
-        className={`relative w-full h-[380px] sm:h-[440px] bg-[#FAF9F5] select-none ${
+        className={`relative w-full h-[380px] sm:h-[440px] bg-[#FAF9F5] select-none touch-pan-y ${
           hoveredHub ? "cursor-pointer" : "cursor-crosshair"
         }`}
       >
@@ -647,7 +649,7 @@ export function BountyUniverse({ bounties }: BountyUniverseProps) {
             setHoveredHub(null);
           }}
           onClick={handleClick}
-          className="w-full h-full block"
+          className="w-full h-full block touch-pan-y"
         />
 
         {/* Legend */}
