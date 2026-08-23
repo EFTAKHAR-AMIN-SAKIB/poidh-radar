@@ -12,7 +12,6 @@ const nextConfig = {
         hostname: "**",
       },
     ],
-    unoptimized: true, // Allows all IPFS / pinata images without build-time blocking
   },
 };
 

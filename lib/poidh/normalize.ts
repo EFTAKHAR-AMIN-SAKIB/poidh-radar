@@ -40,6 +40,29 @@ export function resolveImageUrl(url: string | null | undefined, gatewayIndex = 0
   return null;
 }
 
+/**
+ * Given an IPFS gateway URL, return the same CID served by the next gateway
+ * in the IPFS_GATEWAYS list. Returns null if the URL is not an IPFS gateway
+ * URL or if all gateways have been exhausted.
+ */
+export function getNextGatewayUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== "string") return null;
+
+  // Find which gateway the current URL is using
+  const currentIdx = IPFS_GATEWAYS.findIndex((gw) => url.startsWith(gw));
+  if (currentIdx === -1) return null; // Not an IPFS gateway URL
+
+  // Extract the CID + path portion after the gateway prefix
+  const cidPath = url.slice(IPFS_GATEWAYS[currentIdx].length);
+  if (!cidPath) return null;
+
+  // Try the next gateway in the list
+  const nextIdx = currentIdx + 1;
+  if (nextIdx >= IPFS_GATEWAYS.length) return null; // All gateways exhausted
+
+  return IPFS_GATEWAYS[nextIdx] + cidPath;
+}
+
 export function parseTimestamp(val: unknown): number | null {
   if (val === null || val === undefined) return null;
   if (typeof val === "number") {

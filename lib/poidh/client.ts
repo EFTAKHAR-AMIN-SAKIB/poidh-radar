@@ -163,32 +163,46 @@ async function syncProtocolBounties() {
     // 1. High-watermark discovery across all 4 chains concurrently
     await Promise.allSettled(CHAIN_ORDER.map((c) => discoverNewBountiesForChain(c)));
 
-    // 2. Refresh active open bounties in the background to capture new claims/status changes
+    // Helper to live-refresh a bounty from the canonical endpoint
+    const refreshBounty = async (b: Bounty) => {
+      try {
+        const res = await fetch(`https://poidh.xyz/${b.chain}/bounty/${b.id}/data`, {
+          headers: { "User-Agent": BROWSER_UA },
+        });
+        if (res.ok) {
+          const text = await res.text();
+          if (text && text.trim().startsWith("{")) {
+            const raw = JSON.parse(text);
+            if (raw && (raw.title || raw.name || raw.id)) {
+              const refreshed = normalizeBounty(raw, b.chain, b.id);
+              bountyStore.set(refreshed.key, refreshed);
+            }
+          }
+        }
+      } catch {
+        // Ignore transient timeout
+      }
+    };
+
+    // 2. Refresh active open bounties to capture new claims/status changes
     const openBounties = Array.from(bountyStore.values())
       .filter((b) => b.status === "open" || b.status === "review")
       .slice(0, 20);
 
-    await Promise.allSettled(
-      openBounties.map(async (b) => {
-        try {
-          const res = await fetch(`https://poidh.xyz/${b.chain}/bounty/${b.id}/data`, {
-            headers: { "User-Agent": BROWSER_UA },
-          });
-          if (res.ok) {
-            const text = await res.text();
-            if (text && text.trim().startsWith("{")) {
-              const raw = JSON.parse(text);
-              if (raw && (raw.title || raw.name || raw.id)) {
-                const refreshed = normalizeBounty(raw, b.chain, b.id);
-                bountyStore.set(refreshed.key, refreshed);
-              }
-            }
-          }
-        } catch {
-          // Ignore transient timeout
-        }
-      })
-    );
+    await Promise.allSettled(openBounties.map(refreshBounty));
+
+    // 3. Refresh top-scored bounties (shown on homepage "Hot Right Now")
+    //    This is critical: snapshot data lacks claim arrays, so homepage cards
+    //    show wrong claimCount. Fetching live data fixes submissions + values.
+    const topScored = Array.from(bountyStore.values())
+      .sort((a, b) => b.radarScore - a.radarScore)
+      .slice(0, 30);
+
+    // Deduplicate: skip bounties already refreshed in step 2
+    const alreadyRefreshed = new Set(openBounties.map((b) => b.key));
+    const topToRefresh = topScored.filter((b) => !alreadyRefreshed.has(b.key));
+
+    await Promise.allSettled(topToRefresh.map(refreshBounty));
 
     lastSyncTimestamp = Date.now();
   } catch (err) {

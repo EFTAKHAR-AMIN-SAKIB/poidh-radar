@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Compass, Flame, Image as ImageIcon, Sparkles, Target, Users } from "lucide-react";
 import { CHAINS } from "@/lib/poidh/chains";
+import { getNextGatewayUrl } from "@/lib/poidh/normalize";
 import { Bounty } from "@/lib/poidh/types";
 import { cn } from "@/lib/utils/cn";
 import { formatRelativeTime, formatReward } from "@/lib/utils/format";
@@ -117,15 +118,45 @@ export function BountyCard({ bounty, featured = false, className }: BountyCardPr
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgSrc, setImgSrc] = useState(bounty.proofImage);
+  const imgTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rewardInfo = formatReward(bounty.amountWei, bounty.currency, bounty.priceUsd);
   const chainConfig = CHAINS[bounty.chain] || CHAINS.base;
 
-  const displayReward = rewardInfo.usdEstimate
-    ? rewardInfo.usdEstimate
-    : `${bounty.amountNumber.toFixed(bounty.amountNumber < 0.01 ? 4 : 2)} ${bounty.currency}`;
+  // Primary: native token amount (e.g. "0.0301 ETH"), matching the detail page
+  const displayReward = rewardInfo.fullWithSymbol;
 
-  const hasValidProofImage = Boolean(bounty.proofImage && !imgError);
+  const hasValidProofImage = Boolean(imgSrc && !imgError);
+
+  // Image load timeout — if image hasn't loaded within 10s, try next gateway or give up
+  useEffect(() => {
+    if (!imgSrc || imgLoaded || imgError) return;
+
+    imgTimeoutRef.current = setTimeout(() => {
+      const nextUrl = getNextGatewayUrl(imgSrc);
+      if (nextUrl && nextUrl !== imgSrc) {
+        setImgSrc(nextUrl);
+      } else {
+        setImgError(true);
+      }
+    }, 10000);
+
+    return () => {
+      if (imgTimeoutRef.current) clearTimeout(imgTimeoutRef.current);
+    };
+  }, [imgSrc, imgLoaded, imgError]);
+
+  // Handle image error — try next IPFS gateway before giving up
+  const handleImgError = () => {
+    if (imgTimeoutRef.current) clearTimeout(imgTimeoutRef.current);
+    const nextUrl = getNextGatewayUrl(imgSrc);
+    if (nextUrl && nextUrl !== imgSrc) {
+      setImgSrc(nextUrl);
+    } else {
+      setImgError(true);
+    }
+  };
 
   return (
     <>
@@ -149,15 +180,19 @@ export function BountyCard({ bounty, featured = false, className }: BountyCardPr
                 </div>
               )}
               <img
-                src={bounty.proofImage!}
+                src={imgSrc!}
                 alt={bounty.title}
-                onLoad={() => setImgLoaded(true)}
-                onError={() => setImgError(true)}
+                onLoad={() => {
+                  if (imgTimeoutRef.current) clearTimeout(imgTimeoutRef.current);
+                  setImgLoaded(true);
+                }}
+                onError={handleImgError}
                 className={cn(
                   "w-full h-full object-cover group-hover:scale-105 transition-all duration-300",
                   imgLoaded ? "opacity-100" : "opacity-0"
                 )}
                 loading="lazy"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
             </>
           ) : (
@@ -218,8 +253,15 @@ export function BountyCard({ bounty, featured = false, className }: BountyCardPr
           {/* Reward & Submissions Row */}
           <div className="pt-3 border-t border-[#E5E4DF] flex items-center justify-between gap-2">
             {/* Reward Box */}
-            <div className="px-2.5 py-1 rounded bg-[#F0EEE6] border border-[#E5E4DF] text-[#141413] font-bold text-xs sm:text-sm font-mono">
-              {displayReward}
+            <div className="px-2.5 py-1 rounded bg-[#F0EEE6] border border-[#E5E4DF] font-mono">
+              <div className="text-[#141413] font-bold text-xs sm:text-sm">
+                {displayReward}
+              </div>
+              {rewardInfo.usdEstimate && (
+                <div className="text-[10px] text-[#6B6B67]">
+                  {rewardInfo.usdEstimate}
+                </div>
+              )}
             </div>
 
             {/* Submissions text */}
