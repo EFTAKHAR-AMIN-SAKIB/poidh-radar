@@ -10,7 +10,8 @@ export const metadata: Metadata = {
     "Complete bounty explorer with real-time multi-facet filtering across Base, Degen, Arbitrum, and Ethereum Mainnet.",
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function BountiesPage() {
   const bounties = await getAllBounties();

@@ -23,7 +23,8 @@ export const metadata: Metadata = {
     "Explore POIDH bounty distribution, reward volume, and active opportunities across Base, Degen, Arbitrum, and Ethereum Mainnet.",
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ChainsPage() {
   const bounties = await getAllBounties();

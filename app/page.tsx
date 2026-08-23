@@ -9,7 +9,8 @@ import { LiveBountyPulse } from "@/components/discovery/LiveBountyPulse";
 import { MostActive } from "@/components/discovery/MostActive";
 import { BountyUniverse } from "@/components/visual/BountyUniverse";
 
-export const revalidate = 30; // ISR revalidate every 30 seconds
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function HomePage() {
   const [bounties, liveStats] = await Promise.all([
