@@ -200,7 +200,7 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
 
             {/* Dropdown Menu Options */}
             {chainMenuOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-[#E5E4DF] bg-[#FAF9F5] shadow-paper-md py-1 animate-in fade-in duration-100 overflow-hidden font-mono text-xs">
+              <div className="absolute left-0 right-0 top-full mt-1 z-30 rounded-lg border border-[#E5E4DF] bg-[#FAF9F5] shadow-paper-md py-1 animate-simple-fade overflow-hidden font-mono text-xs">
                 {chainOptions.map((opt) => {
                   const isSelected = selectedChain === opt.slug;
                   return (
