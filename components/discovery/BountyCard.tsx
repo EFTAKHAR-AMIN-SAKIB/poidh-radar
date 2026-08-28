@@ -77,36 +77,53 @@ function EmptyThumbnailState({ bounty }: { bounty: Bounty }) {
       {/* Foreground Content Stack */}
       <div className="relative z-10 flex flex-col items-center justify-center space-y-1.5 max-w-[240px]">
         {/* Dynamic Status Pill */}
-        {isZeroClaims ? (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] text-[9px] font-mono font-bold uppercase tracking-wider shadow-2xs">
+        {bounty.status === "open" ? (
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[9px] font-mono font-bold uppercase tracking-wider shadow-2xs">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D97757] opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#D97757]" />
-            </span>
-            <span>0 CLAIMS · OPEN</span>
-          </div>
-        ) : (
-          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-[#2563EB] text-[9px] font-mono font-bold uppercase tracking-wider shadow-2xs">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2563EB] opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#2563EB]" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
             </span>
             <span>
-              {bounty.claimCount} {bounty.claimCount === 1 ? "CLAIM" : "CLAIMS"} · IN PROGRESS
+              {bounty.claimCount === 0 ? "0 CLAIMS · OPEN" : `${bounty.claimCount} ${bounty.claimCount === 1 ? "CLAIM" : "CLAIMS"} · OPEN`}
+            </span>
+          </div>
+        ) : bounty.status === "review" ? (
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-[9px] font-mono font-bold uppercase tracking-wider shadow-2xs">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+            </span>
+            <span>
+              {bounty.claimCount} {bounty.claimCount === 1 ? "CLAIM" : "CLAIMS"} · VOTING IN PROGRESS
+            </span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#F0EEE6] border border-[#E5E4DF] text-[#6B6B67] text-[9px] font-mono font-bold uppercase tracking-wider shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#8E8E8A]" />
+            <span>
+              {bounty.claimCount > 0 ? `${bounty.claimCount} ${bounty.claimCount === 1 ? "CLAIM" : "CLAIMS"} · PAST BOUNTY` : "PAST BOUNTY"}
             </span>
           </div>
         )}
 
         {/* Dynamic Headline */}
         <h4 className="font-serif font-bold text-[#141413] text-xs sm:text-[15px] leading-tight group-hover:text-[#D97757] transition-colors">
-          {isZeroClaims ? "Be the First to Claim" : "Proof in Progress"}
+          {bounty.status === "open"
+            ? (bounty.claimCount === 0 ? "Be the First to Claim" : "Open for Submissions")
+            : bounty.status === "review"
+            ? "Voting in Progress"
+            : "Past Bounty"}
         </h4>
 
         {/* Supporting Explanation */}
         <p className="hidden sm:block text-[11px] text-[#6B6B67] leading-snug font-sans max-w-[210px] line-clamp-2">
-          {isZeroClaims
-            ? "No submission yet — your proof could be the first."
-            : "Claims have been submitted. See what others are working on."}
+          {bounty.status === "open"
+            ? (bounty.claimCount === 0
+                ? "No submission yet — your proof could be the first."
+                : "Active onchain bounty accepting proof submissions.")
+            : bounty.status === "review"
+            ? "Community voting or multisig review is actively in progress."
+            : "This bounty has concluded or was settled."}
         </p>
 
         {/* Interactive CTA Pill */}
@@ -114,12 +131,14 @@ function EmptyThumbnailState({ bounty }: { bounty: Bounty }) {
           <span
             className={cn(
               "inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-md bg-[#FFFFFF] border font-mono text-[9px] sm:text-[10px] font-bold shadow-2xs transition-all duration-200",
-              isZeroClaims
+              bounty.status === "open"
                 ? "border-[#E5E4DF] text-[#141413] group-hover:border-[#D97757] group-hover:bg-[#FAF9F5] group-hover:text-[#D97757]"
-                : "border-[#E5E4DF] text-[#141413] group-hover:border-[#2563EB] group-hover:bg-[#FAF9F5] group-hover:text-[#2563EB]"
+                : bounty.status === "review"
+                ? "border-[#E5E4DF] text-[#141413] group-hover:border-amber-500 group-hover:bg-[#FAF9F5] group-hover:text-amber-700"
+                : "border-[#E5E4DF] text-[#141413] group-hover:border-[#6B6B67] group-hover:bg-[#FAF9F5] group-hover:text-[#141413]"
             )}
           >
-            <span>{isZeroClaims ? "View" : "Claims"}</span>
+            <span>{bounty.claimCount > 0 ? "Claims" : "View"}</span>
             <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>

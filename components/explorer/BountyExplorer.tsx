@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -42,10 +42,21 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
       ? [initialChainParam.toLowerCase() as ChainSlug]
       : [...CHAIN_ORDER];
 
-  const initialStatuses: BountyStatus[] =
-    initialStatusParam && ["open", "review", "paid", "cancelled"].includes(initialStatusParam.toLowerCase())
-      ? [initialStatusParam.toLowerCase() as BountyStatus]
-      : [];
+  const parseStatusParam = (param: string | null): BountyStatus[] => {
+    if (!param) return [];
+    return param
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .map((s) => {
+        if (s === "completed" || s === "past" || s === "closed") return "paid";
+        if (s === "progress" || s === "voting") return "review";
+        if (s === "new") return "open";
+        return s as BountyStatus;
+      })
+      .filter((s) => ["open", "review", "paid"].includes(s));
+  };
+
+  const initialStatuses: BountyStatus[] = parseStatusParam(initialStatusParam);
 
   const [filters, setFilters] = useState<FilterState>({
     chains: initialChains,
@@ -61,6 +72,35 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 16;
+
+  // Reactively sync URL searchParams into filters state when URL changes (e.g. from Hero or Search Modal)
+  useEffect(() => {
+    const qParam = searchParams.get("q") || "";
+    const chainParam = searchParams.get("chain");
+    const statusParam = searchParams.get("status");
+    const sortParam = searchParams.get("sort") as SortOption;
+    const gemsParam = searchParams.get("gems") === "true";
+    const proofParam = searchParams.get("proof") === "true";
+    const multiplayerParam = searchParams.get("multiplayer") === "true";
+
+    const parsedChains: ChainSlug[] = chainParam
+      ? (chainParam.split(",").map((c) => c.trim().toLowerCase()) as ChainSlug[]).filter((c) =>
+          CHAIN_ORDER.includes(c)
+        )
+      : [...CHAIN_ORDER];
+
+    const parsedStatuses: BountyStatus[] = parseStatusParam(statusParam);
+
+    setFilters({
+      chains: parsedChains.length > 0 ? parsedChains : [...CHAIN_ORDER],
+      statuses: parsedStatuses,
+      q: qParam,
+      sort: sortParam || "radar-desc",
+      gemsOnly: gemsParam,
+      withProofOnly: proofParam,
+      multiplayerOnly: multiplayerParam,
+    });
+  }, [searchParams]);
 
   // Sync filter changes with URL
   const updateFilters = (newFilters: FilterState) => {

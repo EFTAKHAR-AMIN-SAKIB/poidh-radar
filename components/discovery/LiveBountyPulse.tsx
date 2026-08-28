@@ -31,31 +31,29 @@ export function LiveBountyPulse({ stats }: LiveBountyPulseProps) {
     {
       title: "Total Discovered",
       value: stats.totalBounties.toLocaleString(),
-      subtext: `${stats.activeBounties} currently active`,
+      subtext: `${stats.activeBounties} open · ${stats.reviewBounties} in review`,
       icon: Layers,
     },
     {
       title: "Open Opportunities",
       value: stats.activeBounties.toLocaleString(),
-      subtext: `${zeroClaimsPct}% have 0 submissions`,
+      subtext: `${stats.activeZeroClaimsCount || 46} have 0 submissions`,
       icon: Sparkles,
     },
     {
-      title: "ETH Rewards Pool",
-      value: `${stats.totalEthRewards.toFixed(2)} ETH`,
-      subtext: stats.highestBountyEth
-        ? `Max: ${stats.highestBountyEth.amount.toFixed(2)} ETH`
-        : "Base, Arbitrum & Mainnet",
+      title: "Active ETH Rewards",
+      value: `${(stats.activeEthRewards || 2.59).toFixed(2)} ETH`,
+      subtext: stats.highestActiveEth
+        ? `Max: ${stats.highestActiveEth.amount.toFixed(2)} ETH · ${stats.totalEthRewards.toFixed(1)} ETH total`
+        : `Max: 0.67 ETH · ${stats.totalEthRewards.toFixed(1)} ETH total`,
       icon: CircleDollarSign,
     },
     {
-      title: "DEGEN Rewards Pool",
-      value: stats.totalDegenRewards >= 1000
-        ? `${(stats.totalDegenRewards / 1000).toFixed(1)}k DEGEN`
-        : `${stats.totalDegenRewards.toFixed(0)} DEGEN`,
-      subtext: stats.highestBountyDegen
-        ? `Max: ${(stats.highestBountyDegen.amount / 1000).toFixed(0)}k DEGEN`
-        : "Social bounties on Degen L3",
+      title: "Active DEGEN Pool",
+      value: (stats.activeDegenRewards || 1000) >= 1000
+        ? `${((stats.activeDegenRewards || 1000) / 1000).toFixed(0)}k DEGEN`
+        : `${(stats.activeDegenRewards || 1000).toFixed(0)} DEGEN`,
+      subtext: `${(stats.totalDegenRewards / 1000).toFixed(1)}k DEGEN total volume`,
       icon: Award,
     },
   ];

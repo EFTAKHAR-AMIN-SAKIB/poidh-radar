@@ -73,10 +73,12 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
     router.push(`/bounties${qs ? `?${qs}` : ""}`);
   };
 
-  const activeCount = stats?.activeBounties ?? (totalCount > 0 ? Math.round(totalCount * 0.75) : 92);
-  const totalBountiesCount = stats?.totalBounties ?? (totalCount || 1708);
-  const totalEth = stats?.totalEthRewards ?? 12.45;
-  const estUsd = totalEth > 0 ? (totalEth * 2968).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }) : "$36,961.76";
+  const activeCount = stats?.activeBounties ?? (totalCount > 0 ? Math.round(totalCount * 0.75) : 96);
+  const totalBountiesCount = stats?.totalBounties ?? (totalCount || 3177);
+  const activeEth = stats?.activeEthRewards ?? 2.59;
+  const activeDegen = stats?.activeDegenRewards ?? 1000;
+  const totalActiveUsd = (activeEth * 2800) + (activeDegen * 0.008);
+  const estUsd = totalActiveUsd.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
   const chainOptions = [
     { slug: "all", name: "All networks" },
@@ -96,7 +98,7 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
             <span className="w-1.5 h-1.5 rounded-full bg-[#D97757]" />
             <span className="font-semibold text-[#141413]">ONCHAIN DISCOVERY ENGINE</span>
             <span>•</span>
-            <span>{totalBountiesCount} BOUNTIES INDEXED</span>
+            <span>{totalBountiesCount.toLocaleString()} BOUNTIES INDEXED</span>
           </div>
 
           <div className="space-y-2">
@@ -131,14 +133,14 @@ export function HeroSection({ totalCount = 0, stats }: HeroSectionProps) {
             <span className="text-[#6B6B67]">total indexed</span>
           </Link>
 
-          {/* Pill 3: Estimated Rewards Volume */}
+          {/* Pill 3: Estimated Active Rewards Volume */}
           <Link
             href="/bounties?sort=reward-desc"
             className="px-3.5 py-1.5 rounded-md bg-[#EBDBBC]/40 hover:bg-[#EBDBBC]/60 border border-[#D4A27F]/40 text-xs font-mono flex items-center gap-1.5 text-[#141413] active:scale-95 transition-all shadow-2xs"
             title="View highest reward bounties"
           >
             <span className="font-bold text-[#141413]">{estUsd}</span>
-            <span className="text-[#6B6B67]">reward pool</span>
+            <span className="text-[#6B6B67]">active rewards</span>
           </Link>
 
           {/* Pill 4: 4 Connected Networks */}

@@ -65,7 +65,6 @@ export function FilterRail({
     { key: "open", label: "Open" },
     { key: "review", label: "In Review" },
     { key: "paid", label: "Completed" },
-    { key: "cancelled", label: "Cancelled" },
   ];
 
   const activeFilterCount =

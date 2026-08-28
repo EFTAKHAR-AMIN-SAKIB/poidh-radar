@@ -96,10 +96,15 @@ export interface PulseStats {
   reviewBounties: number;
   completedBounties: number;
   cancelledBounties: number;
+  activeEthRewards: number;
+  activeDegenRewards: number;
   totalEthRewards: number;
   totalDegenRewards: number;
   withClaimsCount: number;
   zeroClaimsCount: number;
+  activeZeroClaimsCount: number;
+  highestActiveEth: { title: string; amount: number; chain: ChainSlug; id: number } | null;
+  highestActiveDegen: { title: string; amount: number; chain: ChainSlug; id: number } | null;
   highestBountyEth: { title: string; amount: number; chain: ChainSlug; id: number } | null;
   highestBountyDegen: { title: string; amount: number; chain: ChainSlug; id: number } | null;
   chainCounts: Record<ChainSlug, number>;

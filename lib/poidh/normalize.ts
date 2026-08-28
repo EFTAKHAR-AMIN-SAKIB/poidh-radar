@@ -82,38 +82,45 @@ export function parseTimestamp(val: unknown): number | null {
 }
 
 export function deriveStatus(raw: Record<string, any>, claims: Claim[] = []): BountyStatus {
-  // 1. If explicitly cancelled
-  if (raw.isCanceled === true || raw.cancelled === true || raw.canceled === true) {
-    return "cancelled";
+  // 1. Past Bounties on POIDH (cancelled, refunded, resolved, paid, or closed inProgress === false)
+  if (
+    raw.isCanceled === true ||
+    raw.cancelled === true ||
+    raw.canceled === true ||
+    raw.isCancelled === true ||
+    raw.isRefunded === true ||
+    raw.refunded === true ||
+    raw.isPaid === true ||
+    raw.paid === true ||
+    raw.claimed === true ||
+    raw.isClaimed === true ||
+    raw.isResolved === true ||
+    raw.resolved === true ||
+    raw.hasAcceptedClaim === true ||
+    raw.inProgress === false
+  ) {
+    return "paid"; // Grouped as Completed (Past Bounties)
   }
-  // 2. If explicitly paid/claimed or has accepted claim
-  if (raw.isPaid === true || raw.paid === true || raw.claimed === true || raw.isClaimed === true) {
-    return "paid";
-  }
+
   for (const c of claims) {
     if (c.accepted) return "paid";
   }
 
-  // 3. If in voting / deliberation period
-  if (raw.isVoting === true) {
-    return "review";
+  // 2. Voting in Progress on POIDH (actively in community voting stage)
+  if (raw.inProgress === true && (raw.isVoting === true || raw.voting === true)) {
+    return "review"; // In Review (Voting in Progress)
   }
 
-  // 4. If explicit status string
+  // 3. Explicit status string fallback
   const s = raw.status || raw.state || raw.bountyStatus;
   if (typeof s === "string") {
     const t = s.toLowerCase();
-    if (/paid|complete|closed|settled|award|accept/.test(t)) return "paid";
-    if (/cancel|refund|withdraw|expired/.test(t)) return "cancelled";
-    if (/voting|decision|review/.test(t)) return "review";
-    if (/open|active|live/.test(t)) return "open";
+    if (/paid|complete|closed|settled|award|accept|cancel|refund|withdraw|expired|past/.test(t)) return "paid";
+    if (/voting|deliberation/.test(t)) return "review";
+    if (/open|active|live|new/.test(t)) return "open";
   }
 
-  // 5. In progress = Open for claims
-  if (raw.inProgress === true || raw.isOpen === true) {
-    return "open";
-  }
-
+  // 4. New Bounties on POIDH (all active non-voting bounties with 0 or >0 claims)
   return "open";
 }
 

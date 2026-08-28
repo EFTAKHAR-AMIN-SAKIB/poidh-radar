@@ -18,6 +18,7 @@ import {
 import { Bounty } from "@/lib/poidh/types";
 import { cn } from "@/lib/utils/cn";
 import { SurpriseMeModal } from "../discovery/SurpriseMeModal";
+import { SearchModal } from "../discovery/SearchModal";
 
 interface NavbarProps {
   bounties?: Bounty[];
@@ -28,21 +29,23 @@ export function Navbar({ bounties = [] }: NavbarProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSurpriseModal, setShowSurpriseModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
-  // Keyboard shortcut '/' to open search
+  // Keyboard shortcut '/' and 'Cmd+K' / 'Ctrl+K' to open search modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === "/" &&
-        !["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName)
-      ) {
+      const isInputOrTextArea = ["INPUT", "TEXTAREA"].includes(
+        (e.target as HTMLElement)?.tagName
+      );
+
+      if ((e.key === "/" && !isInputOrTextArea) || ((e.metaKey || e.ctrlKey) && e.key === "k")) {
         e.preventDefault();
-        router.push("/bounties");
+        setShowSearchModal(true);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [router]);
+  }, []);
 
   const navLinks = [
     { label: "Radar", href: "/" },
@@ -58,16 +61,14 @@ export function Navbar({ bounties = [] }: NavbarProps) {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-3 group">
               {/* POIDH Logo */}
-              <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-sm border border-[#E5E4DF] bg-white transition-transform group-hover:scale-105 flex-shrink-0">
-                <Image
-                  src="/logo.png"
-                  alt="POIDH Logo"
-                  fill
-                  sizes="32px"
-                  className="object-cover"
-                  priority
-                />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="POIDH Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full object-cover shadow-sm border border-[#E5E4DF] bg-white transition-transform group-hover:scale-105 flex-shrink-0"
+                priority
+              />
               <div className="flex flex-col">
                 <span className="font-serif text-lg font-bold tracking-tight leading-none transition-colors">
                   <span className="text-[#E61B1B]">POIDH</span>{" "}
@@ -104,25 +105,25 @@ export function Navbar({ bounties = [] }: NavbarProps) {
           {/* Right Header Actions */}
           <div className="flex items-center gap-2">
             {/* Quick Search trigger (Desktop & Tablet) */}
-            <Link
-              href="/bounties"
-              className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] hover:text-[#141413] hover:border-[#D1D0C9] transition-colors"
+            <button
+              onClick={() => setShowSearchModal(true)}
+              className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 text-xs font-mono rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] hover:text-[#141413] hover:border-[#D1D0C9] active:scale-95 transition-all"
             >
               <Search className="w-3.5 h-3.5 text-[#6B6B67]" />
               <span>Search bounties…</span>
               <kbd className="px-1.5 py-0.2 text-[10px] bg-[#FAF9F5] border border-[#E5E4DF] rounded text-[#6B6B67]">
                 /
               </kbd>
-            </Link>
+            </button>
 
             {/* Direct Search Icon for Mobile (< sm) */}
-            <Link
-              href="/bounties"
+            <button
+              onClick={() => setShowSearchModal(true)}
               className="sm:hidden p-2 rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] hover:text-[#141413] active:scale-95 transition-all"
               aria-label="Search all bounties"
             >
               <Search className="w-4 h-4 text-[#D97757]" />
-            </Link>
+            </button>
 
             {/* Surprise Me button */}
             <button
@@ -164,14 +165,16 @@ export function Navbar({ bounties = [] }: NavbarProps) {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#E5E4DF] bg-[#FAF9F5] px-4 py-4 space-y-3 animate-in slide-in-from-top duration-150 shadow-paper-lg">
-            <Link
-              href="/bounties"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-3 py-2.5 text-xs font-mono rounded-lg border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] active:bg-[#EAE7DD]"
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setShowSearchModal(true);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-mono rounded-lg border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67] active:bg-[#EAE7DD] text-left"
             >
               <Search className="w-4 h-4 text-[#D97757]" />
               <span>Search all bounties…</span>
-            </Link>
+            </button>
 
             <div className="space-y-1 pt-1">
               {navLinks.map((link) => (
@@ -240,6 +243,13 @@ export function Navbar({ bounties = [] }: NavbarProps) {
         )}
       </header>
 
+      {/* Global Search Modal */}
+      <SearchModal
+        bounties={bounties}
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+      />
+
       {/* Global Surprise Me Modal */}
       <SurpriseMeModal
         bounties={bounties}
@@ -249,3 +259,4 @@ export function Navbar({ bounties = [] }: NavbarProps) {
     </>
   );
 }
+

@@ -16,10 +16,10 @@ let isSyncing = false;
 
 // Highest known ID per chain (initialized with verified baseline bounds)
 const maxKnownIds: Record<ChainSlug, number> = {
-  base: 1324,
-  arbitrum: 326,
-  degen: 78,
-  mainnet: 109,
+  base: 1339,
+  arbitrum: 329,
+  degen: 1394,
+  mainnet: 115,
 };
 
 /**
@@ -103,7 +103,7 @@ export async function fetchLiveBounty(chain: ChainSlug, id: number): Promise<Bou
  * Discover brand-new bounties created on POIDH by high-watermark probing
  * Checks N_max + 1, N_max + 2 ... on each chain
  */
-async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 10): Promise<Bounty[]> {
+async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 25): Promise<Bounty[]> {
   const currentMax = maxKnownIds[chain] || 1;
   const discovered: Bounty[] = [];
 
@@ -163,10 +163,10 @@ async function syncProtocolBounties() {
     // 1. High-watermark discovery across all 4 chains concurrently
     await Promise.allSettled(CHAIN_ORDER.map((c) => discoverNewBountiesForChain(c)));
 
-    // Helper to live-refresh a bounty from the canonical endpoint
-    const refreshBounty = async (b: Bounty) => {
+    // Helper to live-refresh a bounty from canonical endpoint
+    const refreshSingle = async (chain: ChainSlug, id: number) => {
       try {
-        const res = await fetch(`https://poidh.xyz/${b.chain}/bounty/${b.id}/data`, {
+        const res = await fetch(`https://poidh.xyz/${chain}/bounty/${id}/data`, {
           headers: { "User-Agent": BROWSER_UA },
         });
         if (res.ok) {
@@ -174,7 +174,7 @@ async function syncProtocolBounties() {
           if (text && text.trim().startsWith("{")) {
             const raw = JSON.parse(text);
             if (raw && (raw.title || raw.name || raw.id)) {
-              const refreshed = normalizeBounty(raw, b.chain, b.id);
+              const refreshed = normalizeBounty(raw, chain, id);
               bountyStore.set(refreshed.key, refreshed);
             }
           }
@@ -184,25 +184,22 @@ async function syncProtocolBounties() {
       }
     };
 
-    // 2. Refresh active open bounties to capture new claims/status changes
-    const openBounties = Array.from(bountyStore.values())
+    // 2. Refresh top 25 recent bounties per chain directly from poidh.xyz
+    const refreshTasks: Promise<void>[] = [];
+    for (const chain of CHAIN_ORDER) {
+      const top = maxKnownIds[chain] || 100;
+      for (let id = top; id >= Math.max(1, top - 25); id--) {
+        refreshTasks.push(refreshSingle(chain, id));
+      }
+    }
+    await Promise.allSettled(refreshTasks);
+
+    // 3. Refresh active open / review bounties in memory to capture state updates
+    const activeBounties = Array.from(bountyStore.values())
       .filter((b) => b.status === "open" || b.status === "review")
-      .slice(0, 20);
-
-    await Promise.allSettled(openBounties.map(refreshBounty));
-
-    // 3. Refresh top-scored bounties (shown on homepage "Hot Right Now")
-    //    This is critical: snapshot data lacks claim arrays, so homepage cards
-    //    show wrong claimCount. Fetching live data fixes submissions + values.
-    const topScored = Array.from(bountyStore.values())
-      .sort((a, b) => b.radarScore - a.radarScore)
       .slice(0, 30);
 
-    // Deduplicate: skip bounties already refreshed in step 2
-    const alreadyRefreshed = new Set(openBounties.map((b) => b.key));
-    const topToRefresh = topScored.filter((b) => !alreadyRefreshed.has(b.key));
-
-    await Promise.allSettled(topToRefresh.map(refreshBounty));
+    await Promise.allSettled(activeBounties.map((b) => refreshSingle(b.chain, b.id)));
 
     lastSyncTimestamp = Date.now();
   } catch (err) {
@@ -246,10 +243,13 @@ export function calculatePulseStats(bounties: Bounty[], _overrideStats?: PulseSt
   let review = 0;
   let completed = 0;
   let cancelled = 0;
+  let activeEth = 0;
+  let activeDegen = 0;
   let totalEth = 0;
   let totalDegen = 0;
   let withClaims = 0;
   let zeroClaims = 0;
+  let activeZeroClaims = 0;
 
   const chainCounts: Record<ChainSlug, number> = {
     base: 0,
@@ -265,17 +265,23 @@ export function calculatePulseStats(bounties: Bounty[], _overrideStats?: PulseSt
     mainnet: 0,
   };
 
+  let highestActiveEth: { title: string; amount: number; chain: ChainSlug; id: number } | null = null;
+  let highestActiveDegen: { title: string; amount: number; chain: ChainSlug; id: number } | null = null;
   let highestEth: { title: string; amount: number; chain: ChainSlug; id: number } | null = null;
   let highestDegen: { title: string; amount: number; chain: ChainSlug; id: number } | null = null;
 
   for (const b of bounties) {
     chainCounts[b.chain] = (chainCounts[b.chain] || 0) + 1;
 
+    const isActive = b.status === "open" || b.status === "review";
+
     if (b.status === "open") {
       active++;
       activeChainCounts[b.chain] = (activeChainCounts[b.chain] || 0) + 1;
+      if (b.claimCount === 0) activeZeroClaims++;
     } else if (b.status === "review") {
       review++;
+      activeChainCounts[b.chain] = (activeChainCounts[b.chain] || 0) + 1;
     } else if (b.status === "paid") {
       completed++;
     } else if (b.status === "cancelled") {
@@ -291,44 +297,56 @@ export function calculatePulseStats(bounties: Bounty[], _overrideStats?: PulseSt
       if (!highestDegen || b.amountNumber > highestDegen.amount) {
         highestDegen = { title: b.title, amount: b.amountNumber, chain: b.chain, id: b.id };
       }
+      if (isActive) {
+        activeDegen += b.amountNumber;
+        if (!highestActiveDegen || b.amountNumber > highestActiveDegen.amount) {
+          highestActiveDegen = { title: b.title, amount: b.amountNumber, chain: b.chain, id: b.id };
+        }
+      }
     } else {
       totalEth += b.amountNumber;
       if (!highestEth || b.amountNumber > highestEth.amount) {
         highestEth = { title: b.title, amount: b.amountNumber, chain: b.chain, id: b.id };
       }
+      if (isActive) {
+        activeEth += b.amountNumber;
+        if (!highestActiveEth || b.amountNumber > highestActiveEth.amount) {
+          highestActiveEth = { title: b.title, amount: b.amountNumber, chain: b.chain, id: b.id };
+        }
+      }
     }
   }
 
-  // Sum total on-chain indexed volumes
+  // Sum total on-chain indexed volumes across all 4 contract counters
   const totalCount =
-    (maxKnownIds.base || 1324) +
-    (maxKnownIds.arbitrum || 326) +
-    (maxKnownIds.degen || 78) +
-    (maxKnownIds.mainnet || 109);
+    (maxKnownIds.base || 1339) +
+    (maxKnownIds.arbitrum || 329) +
+    (maxKnownIds.degen || 1394) +
+    (maxKnownIds.mainnet || 115);
 
   return {
-    totalBounties: Math.max(totalCount, 1708),
-    activeBounties: active > 0 ? active : bounties.length,
+    totalBounties: totalCount,
+    activeBounties: active,
     reviewBounties: review,
-    completedBounties: Math.max(0, totalCount - active),
+    completedBounties: completed > 0 ? completed : Math.max(0, totalCount - active - review),
     cancelledBounties: cancelled,
-    totalEthRewards: totalEth > 0 ? totalEth : 12.45,
-    totalDegenRewards: totalDegen > 0 ? totalDegen : 850000,
+    activeEthRewards: activeEth,
+    activeDegenRewards: activeDegen,
+    totalEthRewards: totalEth,
+    totalDegenRewards: totalDegen,
     withClaimsCount: withClaims,
     zeroClaimsCount: zeroClaims,
-    highestBountyEth: highestEth || { title: "POIDH Hero Drop", amount: 1.5, chain: "base", id: 1322 },
-    highestBountyDegen: highestDegen || { title: "Upload a pic", amount: 250000, chain: "degen", id: 1 },
+    activeZeroClaimsCount: activeZeroClaims,
+    highestActiveEth: highestActiveEth || highestEth,
+    highestActiveDegen: highestActiveDegen || highestDegen,
+    highestBountyEth: highestEth,
+    highestBountyDegen: highestDegen,
     chainCounts: {
-      base: Math.max(chainCounts.base, maxKnownIds.base, 1200),
-      arbitrum: Math.max(chainCounts.arbitrum, maxKnownIds.arbitrum, 320),
-      mainnet: Math.max(chainCounts.mainnet, maxKnownIds.mainnet, 110),
-      degen: Math.max(chainCounts.degen, maxKnownIds.degen, 78),
+      base: maxKnownIds.base,
+      arbitrum: maxKnownIds.arbitrum,
+      mainnet: maxKnownIds.mainnet,
+      degen: maxKnownIds.degen,
     },
-    activeChainCounts: {
-      base: activeChainCounts.base || 65,
-      arbitrum: activeChainCounts.arbitrum || 16,
-      mainnet: activeChainCounts.mainnet || 5,
-      degen: activeChainCounts.degen || 4,
-    },
+    activeChainCounts,
   };
 }

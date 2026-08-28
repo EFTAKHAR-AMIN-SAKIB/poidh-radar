@@ -16,25 +16,25 @@ export function StatusBadge({ status, size = "md", className }: StatusBadgeProps
 
   const statusStyles: Record<BountyStatus, { bg: string; text: string; border: string; dot: string }> = {
     open: {
-      bg: "bg-[#F0EEE6]",
-      text: "text-[#141413]",
-      border: "border-[#E5E4DF]",
-      dot: "bg-[#D97757]",
+      bg: "bg-emerald-500/10",
+      text: "text-emerald-700",
+      border: "border-emerald-500/20",
+      dot: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]",
     },
     review: {
-      bg: "bg-[#EBDBBC]/40",
-      text: "text-[#141413]",
-      border: "border-[#D4A27F]/50",
-      dot: "bg-[#CC785C]",
+      bg: "bg-amber-500/10",
+      text: "text-amber-700",
+      border: "border-amber-500/20",
+      dot: "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.5)]",
     },
     paid: {
-      bg: "bg-[#F0EEE6]",
-      text: "text-[#6B6B67]",
-      border: "border-[#E5E4DF]",
-      dot: "bg-[#8E8E8A]",
+      bg: "bg-cyan-500/10",
+      text: "text-cyan-700",
+      border: "border-cyan-500/20",
+      dot: "bg-cyan-500",
     },
     cancelled: {
-      bg: "bg-[#F0EEE6]/60",
+      bg: "bg-[#F0EEE6]",
       text: "text-[#8E8E8A]",
       border: "border-[#E5E4DF]",
       dot: "bg-[#B0AFA9]",
@@ -52,7 +52,7 @@ export function StatusBadge({ status, size = "md", className }: StatusBadgeProps
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 font-mono font-medium tracking-wide rounded-md border",
+        "inline-flex items-center gap-1.5 font-mono font-bold tracking-wide rounded-md border",
         size === "sm" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1",
         style.bg,
         style.text,
