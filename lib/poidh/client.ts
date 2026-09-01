@@ -6,10 +6,10 @@ import { Bounty, ChainSlug, PulseStats } from "./types";
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-const CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const CACHE_TTL_MS = 25 * 1000; // 25 seconds default TTL
 
 // In-memory master bounty store
-let bountyStore: Map<string, Bounty> = new Map();
+const bountyStore: Map<string, Bounty> = new Map();
 let storeInitialized = false;
 let lastSyncTimestamp = 0;
 let isSyncing = false;
@@ -21,6 +21,16 @@ const maxKnownIds: Record<ChainSlug, number> = {
   degen: 1394,
   mainnet: 25,
 };
+
+export interface SyncReport {
+  success: boolean;
+  timestamp: number;
+  durationMs: number;
+  newlyDiscovered: Bounty[];
+  newCount: number;
+  totalIndexed: number;
+  maxKnownIds: Record<ChainSlug, number>;
+}
 
 /**
  * Load offline backup snapshot into memory
@@ -55,23 +65,55 @@ function initStoreIfNeeded() {
 }
 
 /**
+ * Get current sync timestamp
+ */
+export function getLastSyncTimestamp(): number {
+  return lastSyncTimestamp || Date.now();
+}
+
+/**
+ * Get current maximum known IDs across chains
+ */
+export function getMaxKnownIds(): Record<ChainSlug, number> {
+  initStoreIfNeeded();
+  return { ...maxKnownIds };
+}
+
+/**
  * Fetch a single live bounty directly from canonical POIDH protocol endpoint:
  * https://poidh.xyz/[chain]/bounty/[id]/data
  */
-export async function fetchLiveBounty(chain: ChainSlug, id: number): Promise<Bounty | null> {
+export async function fetchLiveBounty(
+  chain: ChainSlug,
+  id: number,
+  forceFresh = false
+): Promise<Bounty | null> {
   initStoreIfNeeded();
   const key = `${chain}:${id}`;
 
-  // 1. Direct fetch from canonical POIDH protocol endpoint
+  if (!forceFresh && bountyStore.has(key)) {
+    // Return cached bounty if fresh enough
+    const cached = bountyStore.get(key)!;
+    if (Date.now() - (cached.fetchedAt || 0) < CACHE_TTL_MS) {
+      return cached;
+    }
+  }
+
+  // 1. Direct fetch from canonical POIDH protocol endpoint with timeout
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+
     const poidhDataUrl = `https://poidh.xyz/${chain}/bounty/${id}/data`;
     const res = await fetch(poidhDataUrl, {
       headers: {
         "User-Agent": BROWSER_UA,
         Accept: "application/json, text/plain, */*",
       },
-      next: { revalidate: 30 },
+      signal: controller.signal,
+      cache: "no-store",
     });
+    clearTimeout(timeout);
 
     if (res.ok) {
       const text = await res.text();
@@ -88,7 +130,7 @@ export async function fetchLiveBounty(chain: ChainSlug, id: number): Promise<Bou
       }
     }
   } catch (err) {
-    console.error(`[POIDH Client] Protocol /data error for ${chain} #${id}:`, err);
+    // Fall back to memory store on network error
   }
 
   // 2. Fallback to existing memory store
@@ -101,9 +143,9 @@ export async function fetchLiveBounty(chain: ChainSlug, id: number): Promise<Bou
 
 /**
  * Discover brand-new bounties created on POIDH by high-watermark probing
- * Checks N_max + 1, N_max + 2 ... on each chain
+ * Checks N_max + 1, N_max + 2 ... on each chain concurrently
  */
-async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 25): Promise<Bounty[]> {
+async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 30): Promise<Bounty[]> {
   const currentMax = maxKnownIds[chain] || 1;
   const discovered: Bounty[] = [];
 
@@ -121,13 +163,19 @@ async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 25): Pr
   // 2. Probe sequentially from currentMax + 1 onwards
   for (let id = currentMax + 1; id <= targetMax; id++) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+
       const poidhDataUrl = `https://poidh.xyz/${chain}/bounty/${id}/data`;
       const res = await fetch(poidhDataUrl, {
         headers: {
           "User-Agent": BROWSER_UA,
           Accept: "application/json, text/plain, */*",
         },
+        signal: controller.signal,
+        cache: "no-store",
       });
+      clearTimeout(timeout);
 
       if (res.ok) {
         const text = await res.text();
@@ -153,60 +201,115 @@ async function discoverNewBountiesForChain(chain: ChainSlug, maxProbes = 25): Pr
 }
 
 /**
+ * Fast helper to live-refresh a single bounty from canonical endpoint
+ */
+async function refreshSingleBounty(chain: ChainSlug, id: number): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+
+    const res = await fetch(`https://poidh.xyz/${chain}/bounty/${id}/data`, {
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Accept: "application/json, text/plain, */*",
+      },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.trim().startsWith("{")) {
+        const raw = JSON.parse(text);
+        if (raw && (raw.title || raw.name || raw.id || raw.amount)) {
+          const refreshed = normalizeBounty(raw, chain, id);
+          bountyStore.set(refreshed.key, refreshed);
+          return true;
+        }
+      }
+    }
+  } catch {
+    // Ignore transient timeouts
+  }
+  return false;
+}
+
+/**
  * Refresh recent and open bounties from the canonical POIDH protocol endpoints
  */
-async function syncProtocolBounties() {
-  if (isSyncing) return;
+export async function syncLiveBounties(force = true): Promise<SyncReport> {
+  initStoreIfNeeded();
+  const startTime = Date.now();
+
+  if (isSyncing && !force) {
+    return {
+      success: true,
+      timestamp: lastSyncTimestamp,
+      durationMs: 0,
+      newlyDiscovered: [],
+      newCount: 0,
+      totalIndexed: bountyStore.size,
+      maxKnownIds: { ...maxKnownIds },
+    };
+  }
+
   isSyncing = true;
+  const newlyDiscovered: Bounty[] = [];
 
   try {
     // 1. High-watermark discovery across all 4 chains concurrently
-    await Promise.allSettled(CHAIN_ORDER.map((c) => discoverNewBountiesForChain(c)));
+    const discoveryResults = await Promise.allSettled(
+      CHAIN_ORDER.map((c) => discoverNewBountiesForChain(c))
+    );
 
-    // Helper to live-refresh a bounty from canonical endpoint
-    const refreshSingle = async (chain: ChainSlug, id: number) => {
-      try {
-        const res = await fetch(`https://poidh.xyz/${chain}/bounty/${id}/data`, {
-          headers: {
-            "User-Agent": BROWSER_UA,
-            Accept: "application/json, text/plain, */*",
-          },
-        });
-        if (res.ok) {
-          const text = await res.text();
-          if (text && text.trim().startsWith("{")) {
-            const raw = JSON.parse(text);
-            if (raw && (raw.title || raw.name || raw.id || raw.amount)) {
-              const refreshed = normalizeBounty(raw, chain, id);
-              bountyStore.set(refreshed.key, refreshed);
-            }
-          }
-        }
-      } catch {
-        // Ignore transient timeout
-      }
-    };
-
-    // 2. Refresh top 50 recent bounties per chain directly from poidh.xyz
-    const refreshTasks: Promise<void>[] = [];
-    for (const chain of CHAIN_ORDER) {
-      const top = maxKnownIds[chain] || 100;
-      for (let id = top; id >= Math.max(1, top - 50); id--) {
-        refreshTasks.push(refreshSingle(chain, id));
+    for (const res of discoveryResults) {
+      if (res.status === "fulfilled" && Array.isArray(res.value)) {
+        newlyDiscovered.push(...res.value);
       }
     }
-    await Promise.allSettled(refreshTasks);
 
-    // 3. Refresh all active open / review bounties in memory to capture state updates
+    // 2. Concurrently refresh the top 20 recent bounties per chain
+    const refreshTasks: Promise<boolean>[] = [];
+    for (const chain of CHAIN_ORDER) {
+      const top = maxKnownIds[chain] || 100;
+      for (let id = top; id >= Math.max(1, top - 20); id--) {
+        refreshTasks.push(refreshSingleBounty(chain, id));
+      }
+    }
+
+    // 3. Concurrently refresh active open / review bounties in memory to capture state & claim updates
     const activeBounties = Array.from(bountyStore.values()).filter(
       (b) => b.status === "open" || b.status === "review"
     );
 
-    await Promise.allSettled(activeBounties.map((b) => refreshSingle(b.chain, b.id)));
+    for (const b of activeBounties.slice(0, 40)) {
+      refreshTasks.push(refreshSingleBounty(b.chain, b.id));
+    }
 
+    await Promise.allSettled(refreshTasks);
     lastSyncTimestamp = Date.now();
-  } catch (err) {
-    console.error("[POIDH Client] Sync protocol bounties error:", err);
+
+    return {
+      success: true,
+      timestamp: lastSyncTimestamp,
+      durationMs: Date.now() - startTime,
+      newlyDiscovered,
+      newCount: newlyDiscovered.length,
+      totalIndexed: bountyStore.size,
+      maxKnownIds: { ...maxKnownIds },
+    };
+  } catch (err: any) {
+    console.error("[POIDH Client] Live sync error:", err);
+    return {
+      success: false,
+      timestamp: lastSyncTimestamp,
+      durationMs: Date.now() - startTime,
+      newlyDiscovered: [],
+      newCount: 0,
+      totalIndexed: bountyStore.size,
+      maxKnownIds: { ...maxKnownIds },
+    };
   } finally {
     isSyncing = false;
   }
@@ -220,7 +323,7 @@ export async function getAllBounties(forceRefresh = false): Promise<Bounty[]> {
 
   const now = Date.now();
   if (forceRefresh || now - lastSyncTimestamp > CACHE_TTL_MS) {
-    await syncProtocolBounties();
+    await syncLiveBounties(false);
   }
 
   const allBounties = Array.from(bountyStore.values());
@@ -233,15 +336,18 @@ export async function getAllBounties(forceRefresh = false): Promise<Bounty[]> {
 /**
  * Fetch live ecosystem statistics directly from protocol pool & chain stats
  */
-export async function fetchLiveStats(): Promise<PulseStats | null> {
-  const bounties = await getAllBounties();
+export async function fetchLiveStats(forceRefresh = false): Promise<PulseStats | null> {
+  const bounties = await getAllBounties(forceRefresh);
   return calculatePulseStats(bounties);
 }
 
 /**
  * Calculate ecosystem metrics using sovereign protocol data
  */
-export function calculatePulseStats(bounties: Bounty[], _overrideStats?: PulseStats | null): PulseStats {
+export function calculatePulseStats(
+  bounties: Bounty[],
+  _overrideStats?: PulseStats | null
+): PulseStats {
   let active = 0;
   let review = 0;
   let completed = 0;

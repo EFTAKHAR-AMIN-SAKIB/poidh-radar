@@ -28,6 +28,7 @@ import { fetchLiveBounty, getAllBounties } from "@/lib/poidh/client";
 import { ChainSlug } from "@/lib/poidh/types";
 import { formatDate, formatRelativeTime, formatReward, getStatusMeta, shortenAddress } from "@/lib/utils/format";
 import { SubmissionGallery } from "@/components/bounty/SubmissionGallery";
+import { BountyLiveRefreshButton } from "@/components/bounty/BountyLiveRefreshButton";
 import { ChainBadge, StatusBadge, TagBadge } from "@/components/ui/Badge";
 import { ChainIcon } from "@/components/ui/ChainIcon";
 
@@ -99,6 +100,7 @@ export default async function BountyDetailPage({ params }: BountyDetailPageProps
         </Link>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <BountyLiveRefreshButton chain={bounty.chain} id={bounty.id} />
           <ChainBadge chain={bounty.chain} size="md" />
           <StatusBadge status={bounty.status} size="md" />
           {bounty.isMultiplayer && (

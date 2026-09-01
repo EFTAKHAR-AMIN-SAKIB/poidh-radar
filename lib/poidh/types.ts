@@ -57,6 +57,7 @@ export interface Bounty {
   radarScore: number;
   radarBreakdown: RadarScoreBreakdown;
   standoutTags: string[];
+  fetchedAt?: number;
   raw?: unknown;
 }
 

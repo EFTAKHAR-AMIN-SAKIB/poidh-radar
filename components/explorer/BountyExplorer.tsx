@@ -18,6 +18,7 @@ import { CHAIN_ORDER } from "@/lib/poidh/chains";
 import { Bounty, BountyStatus, ChainSlug, FilterState, SortOption } from "@/lib/poidh/types";
 import { cn } from "@/lib/utils/cn";
 import { BountyCard } from "../discovery/BountyCard";
+import { useLiveSync } from "../sync/LiveSyncContext";
 import { BountyTable } from "./BountyTable";
 import { FilterRail } from "./FilterRail";
 
@@ -26,6 +27,9 @@ interface BountyExplorerProps {
 }
 
 export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
+  const { bounties: liveBounties, isSyncing, syncNow } = useLiveSync();
+  const bounties = liveBounties && liveBounties.length > 0 ? liveBounties : initialBounties;
+
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -151,16 +155,16 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
     const cc: Record<ChainSlug, number> = { base: 0, degen: 0, arbitrum: 0, mainnet: 0 };
     const sc: Record<BountyStatus, number> = { open: 0, review: 0, paid: 0, cancelled: 0, unknown: 0 };
 
-    for (const b of initialBounties) {
+    for (const b of bounties) {
       cc[b.chain] = (cc[b.chain] || 0) + 1;
       sc[b.status] = (sc[b.status] || 0) + 1;
     }
     return { chainCounts: cc, statusCounts: sc };
-  }, [initialBounties]);
+  }, [bounties]);
 
   // Reactive Filter & Search
   const filteredBounties = useMemo(() => {
-    let list = [...initialBounties];
+    let list = [...bounties];
 
     // Chain filter
     if (filters.chains.length > 0 && filters.chains.length < CHAIN_ORDER.length) {
@@ -227,7 +231,7 @@ export function BountyExplorer({ initialBounties }: BountyExplorerProps) {
     }
 
     return list;
-  }, [initialBounties, filters]);
+  }, [bounties, filters]);
 
   // Paginate
   const totalPages = Math.ceil(filteredBounties.length / pageSize) || 1;

@@ -1,14 +1,23 @@
-import { NextResponse } from "next/server";
-import { getAllBounties } from "@/lib/poidh/client";
+import { NextRequest, NextResponse } from "next/server";
+import { getAllBounties, getLastSyncTimestamp } from "@/lib/poidh/client";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const bounties = await getAllBounties();
+    const { searchParams } = new URL(req.url);
+    const forceRefresh = searchParams.get("refresh") === "true";
+
+    const bounties = await getAllBounties(forceRefresh);
+    const syncTime = getLastSyncTimestamp();
+
     return NextResponse.json(bounties, {
       headers: {
-        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+        "Cache-Control": forceRefresh
+          ? "no-store, max-age=0"
+          : "public, s-maxage=20, stale-while-revalidate=40",
+        "X-Sync-Timestamp": syncTime.toString(),
+        "X-Bounties-Count": bounties.length.toString(),
       },
     });
   } catch (error: any) {

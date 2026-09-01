@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Bounty } from "@/lib/poidh/types";
 import { cn } from "@/lib/utils/cn";
+import { LiveSyncControl } from "../sync/LiveSyncControl";
 import { SurpriseMeModal } from "../discovery/SurpriseMeModal";
 import { SearchModal } from "../discovery/SearchModal";
 
@@ -104,6 +105,9 @@ export function Navbar({ bounties = [] }: NavbarProps) {
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-2">
+            {/* Live Sync Instant Control */}
+            <LiveSyncControl />
+
             {/* Quick Search trigger (Desktop & Tablet) */}
             <button
               onClick={() => setShowSearchModal(true)}
@@ -128,24 +132,18 @@ export function Navbar({ bounties = [] }: NavbarProps) {
             {/* Surprise Me button */}
             <button
               onClick={() => setShowSurpriseModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 active:scale-95 transition-all"
+              className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 active:scale-95 transition-all"
             >
               <Dices className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Surprise Me</span>
+              <span>Surprise Me</span>
             </button>
-
-            {/* Live Data Badge */}
-            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono rounded-md border border-[#E5E4DF] bg-[#F0EEE6] text-[#6B6B67]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D97757]" />
-              <span>Live Onchain</span>
-            </div>
 
             {/* External POIDH Link */}
             <a
               href="https://poidh.xyz"
               target="_blank"
               rel="noreferrer"
-              className="hidden md:flex items-center gap-1 text-xs font-mono text-[#6B6B67] hover:text-[#141413] px-2 py-1 transition-colors"
+              className="hidden lg:flex items-center gap-1 text-xs font-mono text-[#6B6B67] hover:text-[#141413] px-2 py-1 transition-colors"
             >
               <span>POIDH.xyz</span>
               <ExternalLink className="w-3 h-3" />

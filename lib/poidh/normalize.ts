@@ -291,6 +291,7 @@ export function normalizeBounty(
     radarScore,
     radarBreakdown,
     standoutTags,
+    fetchedAt: Date.now(),
     raw: rawIn,
   };
 }

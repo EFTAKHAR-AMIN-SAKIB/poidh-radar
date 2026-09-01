@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "snapshot:refresh": "node scripts/refresh-bounties.mjs"
+    "snapshot:refresh": "node scripts/refresh-bounties.mjs",
+    "probe:schema": "node probe-schema.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
