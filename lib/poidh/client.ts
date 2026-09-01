@@ -16,10 +16,10 @@ let isSyncing = false;
 
 // Highest known ID per chain (initialized with verified baseline bounds)
 const maxKnownIds: Record<ChainSlug, number> = {
-  base: 1339,
+  base: 1350,
   arbitrum: 329,
   degen: 1394,
-  mainnet: 115,
+  mainnet: 25,
 };
 
 /**
@@ -167,13 +167,16 @@ async function syncProtocolBounties() {
     const refreshSingle = async (chain: ChainSlug, id: number) => {
       try {
         const res = await fetch(`https://poidh.xyz/${chain}/bounty/${id}/data`, {
-          headers: { "User-Agent": BROWSER_UA },
+          headers: {
+            "User-Agent": BROWSER_UA,
+            Accept: "application/json, text/plain, */*",
+          },
         });
         if (res.ok) {
           const text = await res.text();
           if (text && text.trim().startsWith("{")) {
             const raw = JSON.parse(text);
-            if (raw && (raw.title || raw.name || raw.id)) {
+            if (raw && (raw.title || raw.name || raw.id || raw.amount)) {
               const refreshed = normalizeBounty(raw, chain, id);
               bountyStore.set(refreshed.key, refreshed);
             }
@@ -184,20 +187,20 @@ async function syncProtocolBounties() {
       }
     };
 
-    // 2. Refresh top 25 recent bounties per chain directly from poidh.xyz
+    // 2. Refresh top 50 recent bounties per chain directly from poidh.xyz
     const refreshTasks: Promise<void>[] = [];
     for (const chain of CHAIN_ORDER) {
       const top = maxKnownIds[chain] || 100;
-      for (let id = top; id >= Math.max(1, top - 25); id--) {
+      for (let id = top; id >= Math.max(1, top - 50); id--) {
         refreshTasks.push(refreshSingle(chain, id));
       }
     }
     await Promise.allSettled(refreshTasks);
 
-    // 3. Refresh active open / review bounties in memory to capture state updates
-    const activeBounties = Array.from(bountyStore.values())
-      .filter((b) => b.status === "open" || b.status === "review")
-      .slice(0, 30);
+    // 3. Refresh all active open / review bounties in memory to capture state updates
+    const activeBounties = Array.from(bountyStore.values()).filter(
+      (b) => b.status === "open" || b.status === "review"
+    );
 
     await Promise.allSettled(activeBounties.map((b) => refreshSingle(b.chain, b.id)));
 
@@ -319,10 +322,10 @@ export function calculatePulseStats(bounties: Bounty[], _overrideStats?: PulseSt
 
   // Sum total on-chain indexed volumes across all 4 contract counters
   const totalCount =
-    (maxKnownIds.base || 1339) +
+    (maxKnownIds.base || 1350) +
     (maxKnownIds.arbitrum || 329) +
     (maxKnownIds.degen || 1394) +
-    (maxKnownIds.mainnet || 115);
+    (maxKnownIds.mainnet || 25);
 
   return {
     totalBounties: totalCount,
