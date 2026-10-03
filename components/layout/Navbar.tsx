@@ -18,6 +18,7 @@ import {
 import { Bounty } from "@/lib/poidh/types";
 import { cn } from "@/lib/utils/cn";
 import { LiveSyncControl } from "../sync/LiveSyncControl";
+import { useLiveSync } from "../sync/LiveSyncContext";
 import { SurpriseMeModal } from "../discovery/SurpriseMeModal";
 import { SearchModal } from "../discovery/SearchModal";
 
@@ -31,6 +32,10 @@ export function Navbar({ bounties = [] }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSurpriseModal, setShowSurpriseModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+
+  // Use live synced bounties if available, falling back to initial props
+  const { bounties: liveBounties } = useLiveSync();
+  const allBounties = liveBounties && liveBounties.length > 0 ? liveBounties : bounties;
 
   // Keyboard shortcut '/' and 'Cmd+K' / 'Ctrl+K' to open search modal
   useEffect(() => {
@@ -108,6 +113,17 @@ export function Navbar({ bounties = [] }: NavbarProps) {
             {/* Live Sync Instant Control */}
             <LiveSyncControl />
 
+            {/* Surprise Me button — positioned right beside the Sync button */}
+            <button
+              onClick={() => setShowSurpriseModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 hover:border-[#D97757] active:scale-95 transition-all shadow-2xs"
+              title="Surprise Me — Discover a random high-potential bounty"
+              aria-label="Surprise Me"
+            >
+              <Dices className="w-3.5 h-3.5 flex-shrink-0 text-[#D97757]" />
+              <span className="hidden sm:inline">Surprise Me</span>
+            </button>
+
             {/* Quick Search trigger (Desktop & Tablet) */}
             <button
               onClick={() => setShowSearchModal(true)}
@@ -127,15 +143,6 @@ export function Navbar({ bounties = [] }: NavbarProps) {
               aria-label="Search all bounties"
             >
               <Search className="w-4 h-4 text-[#D97757]" />
-            </button>
-
-            {/* Surprise Me button */}
-            <button
-              onClick={() => setShowSurpriseModal(true)}
-              className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-medium rounded-md border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 active:scale-95 transition-all"
-            >
-              <Dices className="w-3.5 h-3.5" />
-              <span>Surprise Me</span>
             </button>
 
             {/* External POIDH Link */}
@@ -172,6 +179,21 @@ export function Navbar({ bounties = [] }: NavbarProps) {
             >
               <Search className="w-4 h-4 text-[#D97757]" />
               <span>Search all bounties…</span>
+            </button>
+
+            {/* Surprise Me in Mobile Menu */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setShowSurpriseModal(true);
+              }}
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-mono font-medium rounded-lg border border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757] active:bg-[#D97757]/20 text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Dices className="w-4 h-4 text-[#D97757]" />
+                <span>Surprise Me</span>
+              </div>
+              <span className="text-[10px] text-[#D97757]/80">Random Bounty 🎲</span>
             </button>
 
             <div className="space-y-1 pt-1">
@@ -243,14 +265,14 @@ export function Navbar({ bounties = [] }: NavbarProps) {
 
       {/* Global Search Modal */}
       <SearchModal
-        bounties={bounties}
+        bounties={allBounties}
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       />
 
       {/* Global Surprise Me Modal */}
       <SurpriseMeModal
-        bounties={bounties}
+        bounties={allBounties}
         isOpen={showSurpriseModal}
         onClose={() => setShowSurpriseModal(false)}
       />
